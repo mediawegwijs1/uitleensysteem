@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mediawegwijs - Uitleensysteem</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.85; }
+    }
+    .animate-pulse-subtle { animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col justify-between select-none overflow-hidden">
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="bg-white border-b border-slate-200 px-6 py-2.5 flex items-center justify-between shadow-sm z-30 h-14">
+    <!-- Links: Live Klok -->
+    <div id="liveClock" class="text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+      <span id="dateText">Laden...</span>
+    </div>
+
+    <!-- Midden: Ingelogde Docent + Uitlogknop -->
+    <div id="headerUserContainer" class="hidden flex items-center gap-3 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full shadow-inner">
+      <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Docent:</span>
+      <span id="headerUserName" class="text-sm font-bold text-indigo-700"></span>
+      <button onclick="logoutTeacher()" class="ml-2 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs font-semibold px-2.5 py-0.5 rounded-full transition-colors flex items-center gap-1">
+        ✕ Uitloggen
+      </button>
+    </div>
+
+    <!-- Rechts: Adminpaneel Knop -->
+    <button onclick="openAdminModal()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition shadow-sm active:scale-95">
+      ⚙️ <span class="hidden sm:inline">Admin</span>
+    </button>
+  </header>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="flex-1 relative overflow-hidden flex flex-col">
+
+    <!-- SCHERM 1: NAAM SELECTIE (START) -->
+    <section id="screenSelectTeacher" class="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full">
+      <div class="w-full bg-white p-8 rounded-2xl shadow-md border border-slate-200 text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mb-4 shadow-sm text-2xl">
+          👋
+        </div>
+        <h1 class="text-2xl font-bold text-slate-800 mb-1">Welkom bij Mediawegwijs</h1>
+        <p class="text-sm text-slate-500 mb-6">Typ je naam om materialen en tablets te halen of brengen</p>
+
+        <!-- Zoek input -->
+        <div class="relative w-full mb-6">
+          <input 
+            type="text" 
+            id="teacherSearchInput" 
+            placeholder="Typ je naam..." 
+            autocomplete="off"
+            oninput="filterTeachers()"
+            class="w-full text-lg px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:border-indigo-600 focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 font-medium"
+          />
+          <span class="absolute right-4 top-4 text-slate-400 text-xl">🔍</span>
+        </div>
+
+        <!-- Suggestie Chips -->
+        <div id="teacherSuggestions" class="flex flex-wrap gap-2.5 justify-center max-h-48 overflow-y-auto custom-scroll p-1">
+          <!-- Dynamisch ingevuld -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHERM 2: TOTAALOVERZICHT (HALEN & BRENGEN) -->
+    <section id="screenDashboard" class="hidden flex-1 overflow-y-auto custom-scroll p-4 md:p-6 pb-24">
+      <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- 2.1 IN JOUW BEZIT (Alleen zichtbaar als er items zijn) -->
+        <div id="sectionInPossession" class="hidden bg-amber-50/80 border border-amber-200 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-amber-900 flex items-center gap-2">
+              📦 Momenteel in jouw bezit
+            </h2>
+            <span class="text-xs text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md font-medium">Tik op een item om in te leveren</span>
+          </div>
+          <div id="myPossessionsList" class="flex flex-wrap gap-3">
+            <!-- Dynamisch ingevuld -->
+          </div>
+        </div>
+
+        <!-- 2.2 TABLETS -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              📱 Tablets (Sets)
+            </h2>
+            <span class="text-xs text-slate-400">1 set per docent</span>
+          </div>
+          <div id="tabletGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2.5">
+            <!-- Dynamisch ingevuld -->
+          </div>
+        </div>
+
+        <!-- 2.3 MATERIAAL (DOZEN & TASSEN) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              📚 Lesmateriaal (Dozen & Tassen)
+            </h2>
+            <span class="text-xs text-slate-400">Tik op een les om exemplaar 1, 2, 3... te kiezen</span>
+          </div>
+          <div id="materialGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <!-- Dynamisch ingevuld -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FLOATING ACTIEKNOP RECHTSONDER -->
+    <div id="dashboardFooterAction" class="hidden fixed bottom-10 right-6 z-40">
+      <button 
+        id="btnConfirmTransaction" 
+        onclick="submitTransaction()" 
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-7 py-3.5 rounded-2xl shadow-xl hover:shadow-2xl flex items-center gap-3 transition-all transform active:scale-95 text-base border-2 border-indigo-400/30">
+        <span>Klaar & Opslaan</span>
+        <span id="actionBadge" class="bg-indigo-900/60 text-white text-xs px-2.5 py-1 rounded-full font-semibold">0 acties</span>
+        <span class="text-xl">➔</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-white border-t border-slate-200 px-6 py-2 text-right text-xs text-slate-400 select-none z-20">
+    Bedrijf Mediawegwijs &bull; Gemaakt en ontworpen door <span class="font-medium text-slate-500">Marvin &amp; Maartje</span>
+  </footer>
+
+  <!-- ==================== MODAL: NUMMER SELECTIE VOOR MATERIAAL ==================== -->
+  <div id="numberModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-100 transform transition-all">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <span id="modalItemType" class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-600"></span>
+          <h3 id="modalItemTitle" class="text-xl font-bold text-slate-800 mt-1">Les 4A</h3>
+        </div>
+        <button onclick="closeNumberModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold p-1">✕</button>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Kies welk specifiek genummerd exemplaar je meeneemt:</p>
+
+      <div id="modalNumberGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mb-5">
+        <!-- Nummers worden dynamisch gevuld -->
+      </div>
+
+      <button onclick="closeNumberModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">
+        Sluiten
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADMIN PANEEL ==================== -->
+  <div id="adminModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+      
+      <!-- Admin Header -->
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⚙️</span>
+          <h3 class="text-lg font-bold">Kantoor &amp; Management Adminpaneel</h3>
+        </div>
+        <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+
+      <!-- Admin Inhoud -->
+      <div class="p-6 flex-1 overflow-y-auto custom-scroll">
+        
+        <!-- PIN Invoer View -->
+        <div id="adminPinView" class="py-12 flex flex-col items-center justify-center">
+          <p class="text-sm text-slate-600 font-medium mb-3">Voer de 4-cijferige pincode in:</p>
+          <div class="flex gap-2 mb-4">
+            <input type="password" id="adminPinInput" maxlength="4" placeholder="••••" class="w-36 text-center text-2xl tracking-widest px-4 py-2 border-2 border-slate-300 rounded-xl focus:border-indigo-600 focus:outline-none" />
+          </div>
+          <button onclick="verifyAdminPin()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-xl transition">
+            Inloggen
+          </button>
+          <p id="adminPinError" class="hidden text-rose-500 text-xs font-semibold mt-2">Onjuiste pincode</p>
+        </div>
+
+        <!-- Admin Dashboard View -->
+        <div id="adminDashboardView" class="hidden space-y-6">
+          <div class="flex items-center justify-between border-b pb-3">
+            <h4 class="font-bold text-slate-800">Live Uitgeleend Overzicht</h4>
+            <button onclick="fetchDataFromSheet()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border font-medium">
+              🔄 Verversen
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
+                <tr>
+                  <th class="p-2.5 rounded-l">Categorie</th>
+                  <th class="p-2.5">Item &amp; Nr</th>
+                  <th class="p-2.5">Docent</th>
+                  <th class="p-2.5">Tijdstip</th>
+                  <th class="p-2.5 text-right rounded-r">Actie</th>
+                </tr>
+              </thead>
+              <tbody id="adminLoansTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamisch gevuld -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGICA ==================== -->
+  <script>
+    // PAS DEZE URL AAN MET JOUW GOOGLE APPS SCRIPT WEB APP URL:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
+
+    // Lokale staat
+    let rawData = { docenten: [], tablets: [], materialen: [], activeLoans: [] };
+    let currentTeacher = null;
+    let selectedReturns = []; // Array van { category, item, number }
+    let selectedCheckouts = []; // Array van { category, item, number, type }
+    let inactivityTimer = null;
+    let currentModalItem = null;
+
+    // --- 1. INITIALISATIE & KLOK ---
+    window.addEventListener('DOMContentLoaded', () => {
+      startLiveClock();
+      fetchDataFromSheet();
+      setupInactivityListeners();
+    });
+
+    function startLiveClock() {
+      const update = () => {
+        const now = new Date();
+        const options = { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+        document.getElementById('dateText').textContent = now.toLocaleDateString('nl-NL', options);
+      };
+      update();
+      setInterval(update, 1000);
+    }
+
+    // --- 2. DATA OPHALEN UIT SHEETS ---
+    async function fetchDataFromSheet() {
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getData`);
+        const json = await res.json();
+        if (json.status === "success") {
+          rawData = json;
+          renderTeacherSuggestions();
+          if (currentTeacher) {
+            renderDashboard();
+          }
+          if (!document.getElementById('adminDashboardView').classList.contains('hidden')) {
+            renderAdminTable();
+          }
+        }
+      } catch (err) {
+        console.warn("Kon data niet direct laden (testmodus / script offline):", err);
+        // Fallback testdata voor lokaal testen
+        if (rawData.docenten.length === 0) {
+          useFallbackTestData();
+        }
+      }
+    }
+
+    function useFallbackTestData() {
+      rawData = {
+        docenten: ["Marvin", "Maartje", "Menno", "Johan", "Victor", "Ilse", "Lisa"],
+        tablets: ["Set A","Set B","Set C","Set D","Set E","Set F","Set G","Set H","Set i","Set J","Set R"].map(s => ({ name: s, total: 1 })),
+        materialen: [
+          {code: "1/2B", type: "Doos", total: 4}, {code: "1/2C", type: "Doos", total: 3},
+          {code: "1/2E + 3E", type: "Doos", total: 4}, {code: "1/2F", type: "Doos", total: 3},
+          {code: "3A", type: "Map", total: 3}, {code: "3B", type: "Map", total: 3},
+          {code: "3F", type: "Doos", total: 4}, {code: "4A", type: "Map", total: 3},
+          {code: "4D", type: "Map", total: 4}, {code: "4E", type: "Map", total: 3},
+          {code: "4F", type: "Map", total: 3}, {code: "5E", type: "Doos", total: 1},
+          {code: "5B", type: "Map", total: 2}, {code: "5G", type: "Map", total: 2},
+          {code: "5D", type: "Doos", total: 3}, {code: "5F", type: "Doos", total: 4},
+          {code: "6C", type: "Doos", total: 3}, {code: "6E", type: "Doos", total: 4},
+          {code: "6F", type: "Tas", total: 4}, {code: "7E", type: "Doos", total: 4},
+          {code: "8A+ 8B", type: "Doos", total: 3}, {code: "7G", type: "Doos", total: 4},
+          {code: "8E", type: "Doos", total: 4}, {code: "8F", type: "Doos", total: 4}
+        ],
+        activeLoans: [
+          { category: "Tablet", item: "Set C", number: 1, teacher: "Menno", timestamp: "Vandaag" },
+          { category: "Materiaal", item: "4A", number: 1, teacher: "Menno", timestamp: "Vandaag" }
+        ]
+      };
+      renderTeacherSuggestions();
+    }
+
+    // --- 3. DOCENT SELECTIE & AUTOCOMPLETE ---
+    function renderTeacherSuggestions() {
+      const container = document.getElementById('teacherSuggestions');
+      const input = document.getElementById('teacherSearchInput').value.toLowerCase().trim();
+      container.innerHTML = '';
+
+      const filtered = rawData.docenten.filter(name => name.toLowerCase().includes(input));
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<span class="text-xs text-slate-400 py-2">Geen docent gevonden met deze letters</span>`;
+        return;
+      }
+
+      filtered.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = "bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 text-slate-700 text-base font-semibold px-4 py-2.5 rounded-xl border border-slate-200 transition shadow-xs active:scale-95";
+        btn.textContent = name;
+        btn.onclick = () => selectTeacher(name);
+        container.appendChild(btn);
+      });
+    }
+
+    function filterTeachers() {
+      renderTeacherSuggestions();
+    }
+
+    function selectTeacher(name) {
+      currentTeacher = name;
+      selectedReturns = [];
+      selectedCheckouts = [];
+
+      // UI Switchen
+      document.getElementById('screenSelectTeacher').classList.add('hidden');
+      document.getElementById('screenDashboard').classList.remove('hidden');
+      document.getElementById('dashboardFooterAction').classList.remove('hidden');
+      
+      // Header updaten
+      document.getElementById('headerUserContainer').classList.remove('hidden');
+      document.getElementById('headerUserName').textContent = name;
+
+      renderDashboard();
+      resetInactivityTimer();
+    }
+
+    function logoutTeacher() {
+      currentTeacher = null;
+      selectedReturns = [];
+      selectedCheckouts = [];
+
+      document.getElementById('screenDashboard').classList.add('hidden');
+      document.getElementById('dashboardFooterAction').classList.add('hidden');
+      document.getElementById('headerUserContainer').classList.add('hidden');
+      
+      document.getElementById('screenSelectTeacher').classList.remove('hidden');
+      document.getElementById('teacherSearchInput').value = '';
+      renderTeacherSuggestions();
+      clearTimeout(inactivityTimer);
+    }
+
+    // --- 4. DASHBOARD WEERGAVE ---
+    function renderDashboard() {
+      updateActionBadge();
+      renderInPossessionSection();
+      renderTabletsSection();
+      renderMaterialSection();
+    }
+
+    // 4.1 In Jouw Bezit
+    function renderInPossessionSection() {
+      const container = document.getElementById('sectionInPossession');
+      const list = document.getElementById('myPossessionsList');
+      list.innerHTML = '';
+
+      const myLoans = rawData.activeLoans.filter(l => l.teacher.toLowerCase() === currentTeacher.toLowerCase());
+
+      if (myLoans.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+
+      myLoans.forEach(loan => {
+        const isMarkedReturn = selectedReturns.some(r => 
+          r.category === loan.category && r.item === loan.item && r.number === loan.number
+        );
+
+        const card = document.createElement('button');
+        card.className = `px-4 py-3 rounded-xl border font-semibold text-sm transition-all flex items-center gap-2 ${
+          isMarkedReturn 
+            ? 'bg-rose-100 border-rose-400 text-rose-800 line-through' 
+            : 'bg-white border-amber-300 text-amber-950 shadow-sm hover:border-amber-400'
+        }`;
+
+        const numLabel = loan.category === 'Materiaal' ? ` (Nr ${loan.number})` : '';
+        card.innerHTML = `
+          <span>${loan.category === 'Tablet' ? '📱' : '📦'}</span>
+          <span>${loan.item}${numLabel}</span>
+          <span class="text-xs ml-1 font-bold ${isMarkedReturn ? 'text-rose-600 no-underline' : 'text-amber-600'}">
+            ${isMarkedReturn ? '✓ RETOUR' : '↩ Inleveren'}
+          </span>
+        `;
+
+        card.onclick = () => {
+          if (isMarkedReturn) {
+            selectedReturns = selectedReturns.filter(r => !(r.category === loan.category && r.item === loan.item && r.number === loan.number));
+          } else {
+            selectedReturns.push({ category: loan.category, item: loan.item, number: loan.number });
+          }
+          renderDashboard();
+        };
+
+        list.appendChild(card);
+      });
+    }
+
+    // 4.2 Tablets
+    function renderTabletsSection() {
+      const grid = document.getElementById('tabletGrid');
+      grid.innerHTML = '';
+
+      rawData.tablets.forEach(tab => {
+        const loan = rawData.activeLoans.find(l => l.category === 'Tablet' && l.item === tab.name);
+        const isCheckedOutByMe = selectedCheckouts.some(c => c.category === 'Tablet' && c.item === tab.name);
+        const isMyCurrentPossession = rawData.activeLoans.some(l => l.category === 'Tablet' && l.item === tab.name && l.teacher.toLowerCase() === currentTeacher.toLowerCase());
+        const isMarkedForReturn = selectedReturns.some(r => r.category === 'Tablet' && r.item === tab.name);
+
+        const btn = document.createElement('button');
+        btn.className = "p-3 rounded-xl border flex flex-col items-center justify-center text-center transition-all min-h-[75px]";
+
+        if (isCheckedOutByMe) {
+          btn.className += " bg-emerald-500 border-emerald-600 text-white font-bold shadow-md scale-95";
+          btn.innerHTML = `<span class="text-base font-extrabold">${tab.name}</span><span class="text-[10px] uppercase tracking-wider mt-0.5">✓ Gekozen</span>`;
+          btn.onclick = () => {
+            selectedCheckouts = selectedCheckouts.filter(c => !(c.category === 'Tablet' && c.item === tab.name));
+            renderDashboard();
+          };
+        } else if (loan && !isMyCurrentPossession) {
+          btn.className += " bg-rose-50/70 border-rose-200 text-rose-400 cursor-not-allowed line-through opacity-70";
+          btn.innerHTML = `<span class="text-sm font-semibold">${tab.name}</span><span class="text-[9px] no-underline font-medium text-rose-500 mt-0.5">${loan.teacher}</span>`;
+          btn.disabled = true;
+        } else if (isMyCurrentPossession && !isMarkedForReturn) {
+          btn.className += " bg-amber-50 border-amber-300 text-amber-800 font-semibold";
+          btn.innerHTML = `<span class="text-sm">${tab.name}</span><span class="text-[9px] text-amber-600">Al bij jou</span>`;
+          btn.onclick = () => {
+            selectedReturns.push({ category: 'Tablet', item: tab.name, number: 1 });
+            renderDashboard();
+          };
+        } else {
+          btn.className += " bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 font-bold active:scale-95";
+          btn.innerHTML = `<span class="text-base font-extrabold">${tab.name}</span><span class="text-[10px] text-emerald-600">Vrij</span>`;
+          btn.onclick = () => {
+            selectedCheckouts.push({ category: 'Tablet', item: tab.name, number: 1 });
+            renderDashboard();
+          };
+        }
+
+        grid.appendChild(btn);
+      });
+    }
+
+    // 4.3 Materialen (Dozen / Tassen)
+    function renderMaterialSection() {
+      const grid = document.getElementById('materialGrid');
+      grid.innerHTML = '';
+
+      rawData.materialen.forEach(mat => {
+        // Bereken hoeveel er vrij zijn
+        const activeLoansForThis = rawData.activeLoans.filter(l => l.category === 'Materiaal' && l.item === mat.code);
+        const mySelectedForThis = selectedCheckouts.filter(c => c.category === 'Materiaal' && c.item === mat.code);
+        
+        const total = mat.total;
+        const outCount = activeLoansForThis.length;
+        const availableCount = Math.max(0, total - outCount);
+
+        const card = document.createElement('div');
+        card.className = "relative bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer";
+
+        const tagColor = mat.type.toLowerCase() === 'map' ? 'bg-amber-100 text-amber-800' : (mat.type.toLowerCase() === 'tas' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800');
+
+        let statusText = `${availableCount} van ${total} vrij`;
+        let cardBg = "bg-white border-slate-200";
+
+        if (availableCount === 0) {
+          cardBg = "bg-rose-50/50 border-rose-200 opacity-60";
+          statusText = "Alles uitgeleend";
+        }
+
+        if (mySelectedForThis.length > 0) {
+          cardBg = "bg-emerald-50 border-emerald-400 ring-2 ring-emerald-300";
+        }
+
+        card.className = `rounded-xl p-3 flex flex-col justify-between transition border ${cardBg}`;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${tagColor}">${mat.type}</span>
+              <span class="text-xs font-semibold ${availableCount > 0 ? 'text-slate-500' : 'text-rose-500'}">${statusText}</span>
+            </div>
+            <h4 class="text-lg font-extrabold text-slate-800">${mat.code}</h4>
+          </div>
+
+          <div class="mt-3">
+            ${mySelectedForThis.length > 0 
+              ? `<div class="bg-emerald-500 text-white text-xs font-bold py-1.5 px-2 rounded-lg text-center">Gekozen: Nr ${mySelectedForThis.map(x => x.number).join(', ')}</div>` 
+              : `<button class="w-full bg-slate-100 hover:bg-indigo-50 text-slate-700 text-xs font-semibold py-1.5 rounded-lg border border-slate-200 text-center">Kies exemplaar...</button>`
+            }
+          </div>
+        `;
+
+        card.onclick = () => openNumberModal(mat);
+        grid.appendChild(card);
+      });
+    }
+
+    // --- 5. MODAL: NUMMER SELECTIE PER LES ---
+    function openNumberModal(material) {
+      currentModalItem = material;
+      document.getElementById('modalItemTitle').textContent = `Les ${material.code}`;
+      document.getElementById('modalItemType').textContent = material.type;
+
+      const grid = document.getElementById('modalNumberGrid');
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= material.total; i++) {
+        const loan = rawData.activeLoans.find(l => l.category === 'Materiaal' && l.item === material.code && l.number === i);
+        const isSelectedByMe = selectedCheckouts.some(c => c.category === 'Materiaal' && c.item === material.code && c.number === i);
+        const isMyCurrentPossession = loan && loan.teacher.toLowerCase() === currentTeacher.toLowerCase();
+
+        const btn = document.createElement('button');
+        btn.className = "py-3 rounded-xl border flex flex-col items-center justify-center font-bold text-sm transition";
+
+        if (isSelectedByMe) {
+          btn.className += " bg-emerald-500 border-emerald-600 text-white shadow-md";
+          btn.innerHTML = `<span class="text-lg font-black">${i}</span><span class="text-[9px] uppercase">Gekozen</span>`;
+          btn.onclick = () => {
+            selectedCheckouts = selectedCheckouts.filter(c => !(c.category === 'Materiaal' && c.item === material.code && c.number === i));
+            openNumberModal(material);
+            renderDashboard();
+          };
+        } else if (loan && !isMyCurrentPossession) {
+          btn.className += " bg-rose-50 border-rose-200 text-rose-300 line-through cursor-not-allowed";
+          btn.innerHTML = `<span class="text-base">${i}</span><span class="text-[8px] no-underline font-medium text-rose-500">${loan.teacher}</span>`;
+          btn.disabled = true;
+        } else if (isMyCurrentPossession) {
+          btn.className += " bg-amber-50 border-amber-300 text-amber-800";
+          btn.innerHTML = `<span class="text-base">${i}</span><span class="text-[8px] text-amber-600">Al bij jou</span>`;
+          btn.onclick = () => {
+            selectedReturns.push({ category: 'Materiaal', item: material.code, number: i });
+            closeNumberModal();
+            renderDashboard();
+          };
+        } else {
+          btn.className += " bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-800 hover:border-emerald-300";
+          btn.innerHTML = `<span class="text-lg font-black">${i}</span><span class="text-[9px] text-emerald-600">Beschikbaar</span>`;
+          btn.onclick = () => {
+            selectedCheckouts.push({ category: 'Materiaal', item: material.code, number: i, type: material.type });
+            openNumberModal(material);
+            renderDashboard();
+          };
+        }
+
+        grid.appendChild(btn);
+      }
+
+      document.getElementById('numberModal').classList.remove('hidden');
+    }
+
+    function closeNumberModal() {
+      document.getElementById('numberModal').classList.add('hidden');
+      currentModalItem = null;
+    }
+
+    // --- 6. ACTIES BIJHOUDEN & VERZENDEN ---
+    function updateActionBadge() {
+      const totalActions = selectedReturns.length + selectedCheckouts.length;
+      document.getElementById('actionBadge').textContent = `${totalActions} actie${totalActions === 1 ? '' : 's'}`;
+    }
+
+    async function submitTransaction() {
+      if (selectedReturns.length === 0 && selectedCheckouts.length === 0) {
+        alert("Je hebt nog geen items geselecteerd om in te leveren of mee te nemen.");
+        return;
+      }
+
+      const btn = document.getElementById('btnConfirmTransaction');
+      btn.disabled = true;
+      btn.innerHTML = `<span>Verwerken...</span><span class="animate-spin text-lg">⏳</span>`;
+
+      const payload = {
+        action: "processTransaction",
+        teacher: currentTeacher,
+        returns: selectedReturns,
+        checkouts: selectedCheckouts
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payload)
+        });
+
+        // Succes animatie tonen
+        btn.className = "bg-emerald-600 text-white font-bold px-7 py-3.5 rounded-2xl shadow-xl flex items-center gap-3";
+        btn.innerHTML = `<span>✓ Opgeslagen!</span>`;
+
+        setTimeout(() => {
+          btn.disabled = false;
+          logoutTeacher();
+          fetchDataFromSheet();
+        }, 2000);
+
+      } catch (err) {
+        alert("Er is een fout opgetreden bij het verzenden naar Google Sheets. Controleer je internetverbinding.");
+        btn.disabled = false;
+        btn.innerHTML = `<span>Klaar & Opslaan</span><span class="text-xl">➔</span>`;
+      }
+    }
+
+    // --- 7. ADMIN PANEEL & PINCODE (1115) ---
+    function openAdminModal() {
+      document.getElementById('adminModal').classList.remove('hidden');
+      document.getElementById('adminPinView').classList.remove('hidden');
+      document.getElementById('adminDashboardView').classList.add('hidden');
+      document.getElementById('adminPinInput').value = '';
+      document.getElementById('adminPinError').classList.add('hidden');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.add('hidden');
+    }
+
+    function verifyAdminPin() {
+      const pin = document.getElementById('adminPinInput').value;
+      if (pin === "1115") {
+        document.getElementById('adminPinView').classList.add('hidden');
+        document.getElementById('adminDashboardView').classList.remove('hidden');
+        renderAdminTable();
+      } else {
+        document.getElementById('adminPinError').classList.remove('hidden');
+      }
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('adminLoansTableBody');
+      tbody.innerHTML = '';
+
+      if (rawData.activeLoans.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Alle items zijn momenteel aanwezig op kantoor.</td></tr>`;
+        return;
+      }
+
+      rawData.activeLoans.forEach(loan => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="p-2.5 font-medium text-slate-500">${loan.category}</td>
+          <td class="p-2.5 font-bold text-slate-800">${loan.item} ${loan.category === 'Materiaal' ? '(Nr ' + loan.number + ')' : ''}</td>
+          <td class="p-2.5 font-semibold text-indigo-600">${loan.teacher}</td>
+          <td class="p-2.5 text-xs text-slate-400">${loan.timestamp || '-'}</td>
+          <td class="p-2.5 text-right">
+            <button onclick="adminReleaseItem('${loan.category}', '${loan.item}', ${loan.number})" class="text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded font-semibold transition">
+              Vrijgeven
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function adminReleaseItem(category, item, number) {
+      if (!confirm(`Weet je zeker dat je ${item} (Nr ${number}) handmatig wilt vrijgeven?`)) return;
+
+      const payload = {
+        action: "adminRelease",
+        pin: "1115",
+        category: category,
+        item: item,
+        number: number
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(payload)
+        });
+        alert("Item is vrijgegeven!");
+        fetchDataFromSheet();
+      } catch(e) {
+        alert("Fout bij vrijgeven.");
+      }
+    }
+
+    // --- 8. INACTIVITEIT TIMER (2 MINUTEN) ---
+    function setupInactivityListeners() {
+      ['click', 'touchstart', 'mousemove', 'keypress'].forEach(evt => {
+        window.addEventListener(evt, () => {
+          if (currentTeacher) resetInactivityTimer();
+        });
+      });
+    }
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      // 2 minuten = 120.000 ms
+      inactivityTimer = setTimeout(() => {
+        if (currentTeacher) {
+          logoutTeacher();
+        }
+      }, 120000);
+    }
+  </script>
+</body>
+</html>
