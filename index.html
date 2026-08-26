@@ -147,11 +147,12 @@
         <div>
           <span class="font-bold text-slate-800">✨ Nieuwe functies (v0.9):</span>
           <ul class="list-disc pl-4 mt-1 space-y-1">
+            <li><strong>Live Meldingen-teller:</strong> Direct zichtbaar aantal openstaande defecten op de tabknop.</li>
             <li><strong>Meldingssysteem:</strong> Defect of vermissing melden via het ✏️ potloodje bij afronden.</li>
-            <li><strong>Oranje Waarschuwing:</strong> Items met schade/vermissing zijn oranje gemarkeerd met melding van de vorige docent.</li>
-            <li><strong>Fullscreen Controle:</strong> Duidelijk overzicht van wat je inlevert en meeneemt vóór opslaan.</li>
-            <li><strong>Admin Update:</strong> 3 tabs (Live, Schade, Geschiedenis) + realtime multi-zoekfilter.</li>
-            <li><strong>Snelle Cache:</strong> Directe autocomplete bij typen en auto-refresh na opslaan.</li>
+            <li><strong>Oranje Waarschuwing:</strong> Items met schade zijn gemarkeerd met de opmerking van de docent.</li>
+            <li><strong>Fullscreen Controle:</strong> Duidelijk overzicht vóór definitief opslaan.</li>
+            <li><strong>Admin Update:</strong> 3 tabs (Live, Schade, Geschiedenis) + realtime multi-filter.</li>
+            <li><strong>Supersnelle Cache:</strong> Instant autocomplete en automatische verversing.</li>
           </ul>
         </div>
       </div>
@@ -256,7 +257,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: ADMIN PANEEL ==================== -->
+  <!-- ==================== MODAL: ADMIN PANEEL (MET LIVE TELLERS) ==================== -->
   <div id="adminModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
       
@@ -283,14 +284,19 @@
         <div id="adminDashboardView" class="hidden space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
             <div class="flex gap-2">
-              <button id="adminTabBtnLoans" onclick="switchAdminTab('loans')" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs">
-                🟢 Live Uitgeleend
+              <button id="adminTabBtnLoans" onclick="switchAdminTab('loans')" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5">
+                <span>🟢 Live Uitgeleend</span>
+                <span id="badgeLoansCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-950/60 text-white font-bold">0</span>
               </button>
-              <button id="adminTabBtnIssues" onclick="switchAdminTab('issues')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200">
-                ⚠️ Schade &amp; Vermissingen
+              
+              <!-- Tab Schade & Vermissingen met Live Teller -->
+              <button id="adminTabBtnIssues" onclick="switchAdminTab('issues')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                <span>⚠️ Schade &amp; Vermissingen</span>
+                <span id="badgeIssuesCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-300 text-slate-700 font-bold">0</span>
               </button>
-              <button id="adminTabBtnLogs" onclick="switchAdminTab('logs')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200">
-                📜 Totaal Geschiedenis
+
+              <button id="adminTabBtnLogs" onclick="switchAdminTab('logs')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                <span>📜 Totaal Geschiedenis</span>
               </button>
             </div>
             <button onclick="fetchDataFromSheet()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border font-semibold flex items-center gap-1.5">
@@ -380,12 +386,11 @@
     window.addEventListener('DOMContentLoaded', () => {
       startLiveClock();
       
-      // Laad eerst direct de lokale cache (0 ms vertraging)
       if (rawData.docenten && rawData.docenten.length > 0) {
         renderTeacherSuggestions();
+        updateAdminTabBadges();
       }
       
-      // Haal daarna op de achtergrond de allernieuwste data op met cache-buster
       fetchDataFromSheet();
       setupInactivityListeners();
     });
@@ -410,6 +415,7 @@
           rawData = json;
           localStorage.setItem('mww_stock_data', JSON.stringify(json));
           renderTeacherSuggestions();
+          updateAdminTabBadges();
           if (currentTeacher) {
             renderDashboard();
           }
@@ -422,7 +428,28 @@
       }
     }
 
-    // --- 3. DOCENT SELECTIE ---
+    // --- 3. ADMIN TAB BADGES BIJWERKEN ---
+    function updateAdminTabBadges() {
+      const issuesCount = (rawData.issues || []).length;
+      const loansCount = (rawData.activeLoans || []).length;
+
+      const badgeIssues = document.getElementById('badgeIssuesCount');
+      if (badgeIssues) {
+        badgeIssues.textContent = issuesCount;
+        if (issuesCount > 0) {
+          badgeIssues.className = "px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse";
+        } else {
+          badgeIssues.className = "px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-600 font-bold";
+        }
+      }
+
+      const badgeLoans = document.getElementById('badgeLoansCount');
+      if (badgeLoans) {
+        badgeLoans.textContent = loansCount;
+      }
+    }
+
+    // --- 4. DOCENT SELECTIE ---
     function renderTeacherSuggestions() {
       const container = document.getElementById('teacherSuggestions');
       const input = document.getElementById('teacherSearchInput').value.toLowerCase().trim();
@@ -486,7 +513,7 @@
       }
     }
 
-    // --- 4. DASHBOARD WEERGAVE ---
+    // --- 5. DASHBOARD WEERGAVE ---
     function renderDashboard() {
       updateActionBadge();
       renderInPossessionSection();
@@ -650,7 +677,7 @@
       });
     }
 
-    // --- 5. NUMMER SELECTIE VOOR MATERIAAL ---
+    // --- 6. NUMMER SELECTIE MET WAARSCHUWING BIJ ORANJE ---
     function openNumberModal(material) {
       document.getElementById('modalItemTitle').textContent = `Les ${material.code}`;
       document.getElementById('modalItemType').textContent = material.type;
@@ -728,7 +755,7 @@
       }
     }
 
-    // --- 6. REVIEW OVERZICHT & POTLOODJE ---
+    // --- 7. REVIEW OVERZICHT & POTLOODJE ---
     function updateActionBadge() {
       const totalActions = selectedReturns.length + selectedCheckouts.length;
       document.getElementById('actionBadge').textContent = `${totalActions} actie${totalActions === 1 ? '' : 's'}`;
@@ -794,7 +821,7 @@
       return row;
     }
 
-    // --- 7. DEFECT / VERMIST MELDEN ---
+    // --- 8. DEFECT / VERMIST MELDEN ---
     function openReportModal(category, item, number) {
       activeReportingItem = { category, item, number };
       const key = `${category}_${item}_${number}`;
@@ -847,7 +874,7 @@
       openReviewModal();
     }
 
-    // --- 8. FINALE TRANSACTIE & HARDE RELOAD ---
+    // --- 9. FINALE TRANSACTIE & HARDE RELOAD ---
     async function executeFinalTransaction() {
       const btn = document.getElementById('btnFinalSubmit');
       btn.disabled = true;
@@ -885,7 +912,7 @@
       }
     }
 
-    // --- 9. PATCH NOTES & ADMIN ---
+    // --- 10. PATCH NOTES & ADMIN ---
     function openPatchNotesModal() {
       document.getElementById('patchNotesModal').classList.remove('hidden');
     }
@@ -900,6 +927,7 @@
       document.getElementById('adminDashboardView').classList.add('hidden');
       document.getElementById('adminPinInput').value = '';
       document.getElementById('adminPinError').classList.add('hidden');
+      updateAdminTabBadges();
     }
 
     function closeAdminModal() {
@@ -911,6 +939,7 @@
       if (pin === "1115") {
         document.getElementById('adminPinView').classList.add('hidden');
         document.getElementById('adminDashboardView').classList.remove('hidden');
+        updateAdminTabBadges();
         switchAdminTab('loans');
       } else {
         document.getElementById('adminPinError').classList.remove('hidden');
@@ -920,9 +949,9 @@
     function switchAdminTab(tab) {
       activeAdminTab = tab;
       
-      document.getElementById('adminTabBtnLoans').className = tab === 'loans' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200";
-      document.getElementById('adminTabBtnIssues').className = tab === 'issues' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200";
-      document.getElementById('adminTabBtnLogs').className = tab === 'logs' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200";
+      document.getElementById('adminTabBtnLoans').className = tab === 'loans' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
+      document.getElementById('adminTabBtnIssues').className = tab === 'issues' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
+      document.getElementById('adminTabBtnLogs').className = tab === 'logs' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
 
       document.getElementById('adminSectionLoans').classList.toggle('hidden', tab !== 'loans');
       document.getElementById('adminSectionIssues').classList.toggle('hidden', tab !== 'issues');
@@ -1053,7 +1082,7 @@
       } catch(e) { alert("Fout bij markeren als opgelost."); }
     }
 
-    // --- 10. INACTIVITEIT TIMER (2 MINUTEN) ---
+    // --- 11. INACTIVITEIT TIMER (2 MINUTEN) ---
     function setupInactivityListeners() {
       ['click', 'touchstart', 'mousemove', 'keypress'].forEach(evt => {
         window.addEventListener(evt, () => {
