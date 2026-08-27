@@ -14,7 +14,6 @@
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     
-    /* Mascotte en icoontjes animaties */
     @keyframes breathe {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.03) translateY(-1px); }
@@ -42,13 +41,11 @@
 
   <!-- ==================== HEADER ==================== -->
   <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm z-30 h-14">
-    <!-- Links: Live Klok met geheime 5-klik hard reset -->
     <div id="liveClock" onclick="handleClockClick()" class="cursor-pointer text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2 select-none active:opacity-60" title="Tik 5x om cache te wissen">
       <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
       <span id="dateText">Laden...</span>
     </div>
 
-    <!-- Midden: Ingelogde Docent + Uitlogknop -->
     <div id="headerUserContainer" class="hidden flex items-center gap-2 sm:gap-3 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full shadow-inner">
       <span class="text-[11px] sm:text-xs text-slate-400 font-medium uppercase tracking-wider">Docent:</span>
       <span id="headerUserName" class="text-xs sm:text-sm font-bold text-indigo-700"></span>
@@ -57,7 +54,6 @@
       </button>
     </div>
 
-    <!-- Rechts: Adminpaneel Knop -->
     <button onclick="openAdminModal()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-lg border border-slate-300 transition shadow-sm active:scale-95">
       ⚙️ <span class="hidden sm:inline">Admin</span>
     </button>
@@ -136,7 +132,7 @@
       </div>
     </section>
 
-    <!-- ACTIEBALK: OP MOBIEL VOLLEDIG ONDERAAN VAST; OP DESKTOP/TABLET RECHTSONDER FLOATING -->
+    <!-- ACTIEBALK: STICKY OP MOBIEL, FLOATING OP TABLET/DESKTOP -->
     <div id="dashboardFooterAction" class="hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl z-40 sm:bottom-8 sm:right-6 sm:left-auto sm:p-0 sm:bg-transparent sm:border-0 sm:shadow-none">
       <button 
         id="btnOpenReviewModal" 
@@ -153,7 +149,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-6 py-2 flex items-center justify-between text-xs text-slate-400 select-none z-20">
     <div>
-      <span class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">v1.3</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">v1.4</span>
       <button onclick="openPatchNotesModal()" class="ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right">
@@ -165,7 +161,6 @@
   <div id="syncFullscreenModal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 z-[100] text-center text-white">
     <div id="syncStateProcessing" class="flex flex-col items-center space-y-4 max-w-md">
       
-      <!-- Geanimeerd Slapend Vosje Mascot -->
       <div class="relative w-36 h-36 flex items-center justify-center">
         <span class="absolute top-1 right-5 text-indigo-300 font-extrabold text-xl animate-zzz-1">z</span>
         <span class="absolute top-4 right-1 text-indigo-200 font-extrabold text-sm animate-zzz-2">z</span>
@@ -241,7 +236,7 @@
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.3</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.4</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -249,17 +244,16 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.3 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.4 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Mobiele Sticky Bar:</strong> Bevestigingsknop zit op telefoons strak over de volle breedte onderaan vast zonder storende footer.</li>
-            <li><strong>Springend Alarm met Badge (🚨 1):</strong> Kantoor tips hebben nu een opvallend springend alarmlichtje met een 1tje.</li>
-            <li><strong>Geheime Hard Reset:</strong> Tik 5x op de datum/tijd linksboven om alle cache en cookies direct te legen.</li>
+            <li><strong>Anti-Dubbel Boeking:</strong> Slimme ontdubbeling in backend en verruimde timeout tegen dubbele meldingen bij haperende wifi.</li>
+            <li><strong>Schade Overzicht:</strong> Tabletsets tonen nu netjes 'Set A' zonder overbodig '(Nr 1)'.</li>
           </ul>
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 1.2</span>
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 1.3</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Gebundeld live overzicht per docent + rij-specifieke laadwieltjes in admin + slapende mascotte.</li>
+            <li>Mobiele sticky bar, springend alarmlichtje (🚨 1) en geheime 5-klik hard reset op datum/tijd.</li>
           </ul>
         </div>
       </div>
@@ -430,12 +424,12 @@
             <div id="adminLoansGroupedContainer" class="space-y-3"></div>
           </div>
 
-          <!-- TAB 2: Schade & Vermissingen -->
+          <!-- TAB 2: Schade & Vermissingen (Geen Nr 1 bij Tablets) -->
           <div id="adminSectionIssues" class="hidden overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="bg-amber-100 text-amber-900 uppercase text-xs">
                 <tr>
-                  <th class="p-2.5 rounded-l">Item &amp; Nr</th>
+                  <th class="p-2.5 rounded-l">Item</th>
                   <th class="p-2.5">Type</th>
                   <th class="p-2.5">Toelichting</th>
                   <th class="p-2.5">Gemeld Door</th>
@@ -510,7 +504,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
     // Versie controle & Cache Buster
-    const CURRENT_APP_VERSION = "1.3";
+    const CURRENT_APP_VERSION = "1.4";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
@@ -550,7 +544,6 @@
       setInterval(update, 1000);
     }
 
-    // Geheime 5-klik hard reset op de klok
     function handleClockClick() {
       clockClickCount++;
       clearTimeout(clockClickTimer);
@@ -669,7 +662,6 @@
       document.getElementById('screenDashboard').classList.remove('hidden');
       document.getElementById('dashboardFooterAction').classList.remove('hidden');
       
-      // Footer verbergen op mobiel tijdens het kiezen om overlap te voorkomen
       const footer = document.getElementById('mainFooter');
       if (footer) {
         footer.classList.add('hidden', 'sm:flex');
@@ -695,7 +687,6 @@
       document.getElementById('screenSelectTeacher').classList.remove('hidden');
       document.getElementById('teacherSearchInput').value = '';
       
-      // Footer weer zichtbaar maken op het startscherm
       const footer = document.getElementById('mainFooter');
       if (footer) {
         footer.classList.remove('hidden');
@@ -867,7 +858,7 @@
       });
     }
 
-    // --- 6. NUMMER SELECTIE VOOR MATERIAAL ---
+    // --- 6. NUMMER SELECTIE MATERIAAL ---
     function openNumberModal(material) {
       document.getElementById('modalItemTitle').textContent = `Les ${material.code}`;
       document.getElementById('modalItemType').textContent = material.type;
@@ -933,7 +924,8 @@
     }
 
     function handleSelectOrangeItem(category, item, number, issue, callback) {
-      const confirmMsg = `⚠️ LET OP BIJ ${category.toUpperCase()} ${item} (Nr ${number}):\n\n` +
+      const numLabel = category === 'Materiaal' ? ` (Nr ${number})` : '';
+      const confirmMsg = `⚠️ LET OP BIJ ${category.toUpperCase()} ${item}${numLabel}:\n\n` +
                          `Melding door ${issue.teacher} (${issue.type}):\n` +
                          `"${issue.description}"\n\n` +
                          `Weet je zeker dat je dit exemplaar wilt meenemen?`;
@@ -945,7 +937,7 @@
       }
     }
 
-    // --- 7. REVIEW OVERZICHT & SPRINGEND ROOD ALARMLICHT (🚨 1) ---
+    // --- 7. REVIEW OVERZICHT & ALARMLICHT (🚨 1) ---
     function updateActionBadge() {
       const totalActions = selectedReturns.length + selectedCheckouts.length;
       document.getElementById('actionBadge').textContent = `${totalActions} actie${totalActions === 1 ? '' : 's'}`;
@@ -1003,7 +995,6 @@
 
       const numLabel = item.category === 'Materiaal' ? ` (Nr ${item.number})` : '';
 
-      // Kantoor tip: Springend rood alarmlichtje met '1' badge
       const safeNoticeText = notice ? notice.text.replace(/"/g, '&quot;').replace(/'/g, "\\'") : '';
       const noticeHtml = notice 
         ? `<button onclick="showNoticeModal('${safeNoticeText}')" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 px-2 py-1 rounded-lg text-xs font-black animate-jump-siren shadow-xs active:scale-90" title="Klik voor belangrijke kantoor tip">
@@ -1051,7 +1042,8 @@
       const key = `${category}_${item}_${number}`;
       const existing = pendingReports[key];
 
-      document.getElementById('reportModalTitle').textContent = `Melding: ${item} (Nr ${number})`;
+      const numLabel = category === 'Materiaal' ? ` (Nr ${number})` : '';
+      document.getElementById('reportModalTitle').textContent = `Melding: ${item}${numLabel}`;
       document.getElementById('reportTextInput').value = existing ? existing.text : '';
       
       selectReportType(existing ? existing.type : 'Defect');
@@ -1098,7 +1090,7 @@
       openReviewModal();
     }
 
-    // --- 9. FULLSCREEN SYNC & MASCOTTE ---
+    // --- 9. FULLSCREEN SYNC MET 25s TIMEOUT ---
     async function executeFinalTransaction() {
       clearTimeout(inactivityTimer);
 
@@ -1117,7 +1109,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconden timeout voor Google Apps Script
 
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -1269,6 +1261,7 @@
         });
       }
 
+      // TAB 2: Schade & Vermissingen (Geen Nr 1 bij Tablets)
       if (activeAdminTab === 'issues') {
         const tbody = document.getElementById('adminIssuesTableBody');
         tbody.innerHTML = '';
@@ -1282,8 +1275,9 @@
         filtered.forEach(issue => {
           const tr = document.createElement('tr');
           tr.className = "hover:bg-amber-50/50 transition";
+          const itemLabel = issue.category === 'Tablet' ? issue.item : `${issue.item} (Nr ${issue.number})`;
           tr.innerHTML = `
-            <td class="p-2.5 font-bold text-slate-800">${issue.item} (Nr ${issue.number})</td>
+            <td class="p-2.5 font-bold text-slate-800">${itemLabel}</td>
             <td class="p-2.5"><span class="text-xs font-bold px-2 py-0.5 rounded ${issue.type === 'Defect' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}">${issue.type}</span></td>
             <td class="p-2.5 text-xs text-slate-700 font-medium">${issue.description}</td>
             <td class="p-2.5 text-xs text-indigo-600 font-semibold">${issue.teacher}</td>
