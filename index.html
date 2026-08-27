@@ -2,6 +2,9 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mediawegwijs - Uitleensysteem</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -10,6 +13,11 @@
     body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    @keyframes siren-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); filter: drop-shadow(0 0 6px #f59e0b); }
+    }
+    .animate-siren { animation: siren-pulse 1.2s infinite ease-in-out; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex flex-col justify-between select-none overflow-hidden">
@@ -124,7 +132,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer class="bg-white border-t border-slate-200 px-6 py-2 flex items-center justify-between text-xs text-slate-400 select-none z-20">
     <div>
-      <span class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">v1.0</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">v1.1</span>
       <button onclick="openPatchNotesModal()" class="ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right">
@@ -132,37 +140,84 @@
     </div>
   </footer>
 
+  <!-- ==================== MODAL: FULLSCREEN SUCCES / SYNC / OFFLINE ERROR ==================== -->
+  <div id="syncFullscreenModal" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 z-[100] text-center text-white">
+    <!-- View A: Bezig met synchroniseren / Gelukt -->
+    <div id="syncStateProcessing" class="flex flex-col items-center space-y-4 max-w-md">
+      <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center text-4xl shadow-2xl animate-bounce">
+        ✓
+      </div>
+      <h2 class="text-3xl font-extrabold tracking-tight">Helemaal klaar!</h2>
+      <p class="text-lg text-slate-200 font-medium">Je kunt weglopen 👋</p>
+      
+      <div class="mt-8 flex items-center gap-3 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700">
+        <span class="inline-block w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+        <span class="text-xs text-slate-300 font-medium">Informatie wordt gesynchroniseerd met de server...</span>
+      </div>
+    </div>
+
+    <!-- View B: Synchronisatie Mislukt / Offline -->
+    <div id="syncStateError" class="hidden flex flex-col items-center space-y-4 max-w-md bg-white text-slate-800 p-8 rounded-3xl shadow-2xl border border-rose-200">
+      <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mb-1">
+        ⚠️
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-800">Synchronisatie Mislukt</h3>
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Er is geen stabiele internetverbinding. Je geselecteerde spullen staan nog veilig bewaard.
+      </p>
+
+      <div class="flex flex-col w-full gap-2.5 pt-2">
+        <button onclick="executeFinalTransaction()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2">
+          <span>🔄 Opnieuw Proberen</span>
+        </button>
+        <button onclick="cancelSyncAndReturnToReview()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl transition text-xs">
+          Terug naar overzicht
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: KANTOORMEDEDELING POPUP ==================== -->
+  <div id="noticeModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-amber-200">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-2xl animate-siren">🚨</span>
+        <h3 class="text-lg font-bold text-slate-800">Kantoormededeling</h3>
+      </div>
+      <p id="noticeModalText" class="text-sm text-slate-700 bg-amber-50 p-4 rounded-xl border border-amber-200 leading-relaxed font-medium mb-5"></p>
+      <button onclick="closeNoticeModal()" class="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition">
+        Begrepen &amp; Sluiten
+      </button>
+    </div>
+  </div>
+
   <!-- ==================== MODAL: PATCH NOTES ==================== -->
   <div id="patchNotesModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.0</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.1</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
       </div>
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
-        <!-- v1.0 -->
-        <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.0 (Huidig)</span>
+        <!-- v1.1 -->
+        <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.1 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Live Admin Tellers:</strong> Direct zichtbaar aantal openstaande meldingen en uitgiftes op de knoppen.</li>
-            <li><strong>Pulseer-Alert:</strong> Badge knippert oranje bij openstaande schade/vermissingen.</li>
-            <li><strong>Versiebeheer:</strong> Volledig logsysteem en versieoverzicht in de footer.</li>
+            <li><strong>Oranje Tags in Overzicht:</strong> Schade-items direct oranje gemarkeerd met de opmerking.</li>
+            <li><strong>Kantoormededelingen:</strong> Nieuw tabblad in admin voor algemene mededelingen per les of tablet.</li>
+            <li><strong>Knipperend Alarm (`🚨`):</strong> Icoon in het overzichtsscherm dat bij aanklikken de kantoormededeling toont.</li>
+            <li><strong>Fullscreen Sync Scherm:</strong> *"Je kunt weglopen 👋"* animatie met offline retry-beveiliging.</li>
           </ul>
         </div>
-
-        <!-- v0.9 -->
+        <!-- v1.0 -->
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 0.9</span>
-          <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li><strong>Meldingssysteem:</strong> Schade of vermissing melden via het ✏️ potloodje bij afronden.</li>
-            <li><strong>Oranje Waarschuwing:</strong> Items met schade zijn oranje met toelichting van de docent.</li>
-            <li><strong>Fullscreen Controle:</strong> Duidelijk controleoverzicht vóór definitief opslaan.</li>
-            <li><strong>Admin 3-Tabs:</strong> Live uitgeleend, Schademeldingen en Totale geschiedenis met multi-zoekfilter.</li>
-            <li><strong>Snelle Cache:</strong> Directe autocomplete bij typen en auto-refresh na opslaan.</li>
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 1.0</span>
+          <ul class="list-disc pl-4 mt-1 space-y-1 text-slate-600">
+            <li>Live meldingentellers op de adminknoppen + pulseer-alert.</li>
           </ul>
         </div>
       </div>
@@ -267,7 +322,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: ADMIN PANEEL ==================== -->
+  <!-- ==================== MODAL: ADMIN PANEEL (4 TABS) ==================== -->
   <div id="adminModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
       
@@ -293,19 +348,24 @@
 
         <div id="adminDashboardView" class="hidden space-y-5">
           <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
-            <div class="flex gap-2">
-              <button id="adminTabBtnLoans" onclick="switchAdminTab('loans')" class="px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5">
+            <div class="flex flex-wrap gap-2">
+              <button id="adminTabBtnLoans" onclick="switchAdminTab('loans')" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5">
                 <span>🟢 Live Uitgeleend</span>
                 <span id="badgeLoansCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-950/60 text-white font-bold">0</span>
               </button>
               
-              <button id="adminTabBtnIssues" onclick="switchAdminTab('issues')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+              <button id="adminTabBtnIssues" onclick="switchAdminTab('issues')" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
                 <span>⚠️ Schade &amp; Vermissingen</span>
                 <span id="badgeIssuesCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-300 text-slate-700 font-bold">0</span>
               </button>
 
-              <button id="adminTabBtnLogs" onclick="switchAdminTab('logs')" class="px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
-                <span>📜 Totaal Geschiedenis</span>
+              <button id="adminTabBtnNotices" onclick="switchAdminTab('notices')" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                <span>📢 Mededelingen</span>
+                <span id="badgeNoticesCount" class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-300 text-slate-700 font-bold">0</span>
+              </button>
+
+              <button id="adminTabBtnLogs" onclick="switchAdminTab('logs')" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                <span>📜 Geschiedenis</span>
               </button>
             </div>
             <button onclick="fetchDataFromSheet()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border font-semibold flex items-center gap-1.5">
@@ -313,7 +373,7 @@
             </button>
           </div>
 
-          <div>
+          <div id="adminSearchContainer">
             <input 
               type="text" 
               id="adminSearchInput" 
@@ -323,6 +383,7 @@
             />
           </div>
 
+          <!-- TAB 1: Live Uitgeleend -->
           <div id="adminSectionLoans" class="overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
@@ -338,6 +399,7 @@
             </table>
           </div>
 
+          <!-- TAB 2: Schade & Vermissingen -->
           <div id="adminSectionIssues" class="hidden overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="bg-amber-100 text-amber-900 uppercase text-xs">
@@ -354,6 +416,41 @@
             </table>
           </div>
 
+          <!-- TAB 3: Kantoormededelingen Toevoegen / Beheren -->
+          <div id="adminSectionNotices" class="hidden space-y-4">
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+              <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700">Nieuwe Kantoormededeling Koppelen</h5>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <select id="noticeCategorySelect" onchange="populateNoticeItemOptions()" class="text-xs p-2.5 border rounded-lg bg-white">
+                  <option value="Materiaal">Materiaal (Lescode)</option>
+                  <option value="Tablet">Tablet Set</option>
+                </select>
+                <select id="noticeItemSelect" class="text-xs p-2.5 border rounded-lg bg-white"></select>
+                <input type="text" id="noticeTextInput" placeholder="Bijv: Werkbladen bijna op, lader in zijvak..." class="text-xs p-2.5 border rounded-lg bg-white" />
+              </div>
+              <input type="hidden" id="noticeEditingRowId" value="" />
+              <div class="flex justify-end gap-2">
+                <button id="btnCancelNoticeEdit" onclick="cancelNoticeEdit()" class="hidden px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-200 rounded-lg">Annuleren</button>
+                <button id="btnSaveNotice" onclick="saveAdminNotice()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm">Mededeling Opslaan</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 text-slate-600 uppercase text-xs">
+                  <tr>
+                    <th class="p-2.5 rounded-l">Item</th>
+                    <th class="p-2.5">Mededeling</th>
+                    <th class="p-2.5">Datum</th>
+                    <th class="p-2.5 text-right rounded-r">Acties</th>
+                  </tr>
+                </thead>
+                <tbody id="adminNoticesTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 4: Geschiedenis -->
           <div id="adminSectionLogs" class="hidden overflow-x-auto max-h-[50vh] custom-scroll">
             <table class="w-full text-left text-sm">
               <thead class="bg-slate-100 text-slate-600 uppercase text-xs sticky top-0">
@@ -381,8 +478,14 @@
     // PAS DEZE URL AAN MET JE EIGEN APPS SCRIPT WEB APP URL:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
-    // Lokale Status & Offline Cache
-    let rawData = JSON.parse(localStorage.getItem('mww_stock_data') || '{"docenten":[],"tablets":[],"materialen":[],"activeLoans":[],"issues":[],"historyLogs":[]}');
+    // Versie controle & Cache Buster
+    const CURRENT_APP_VERSION = "1.1";
+    if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
+      localStorage.removeItem('mww_stock_data');
+      localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
+    }
+
+    let rawData = JSON.parse(localStorage.getItem('mww_stock_data') || '{"docenten":[],"tablets":[],"materialen":[],"activeLoans":[],"issues":[],"notices":[],"historyLogs":[]}');
     let currentTeacher = null;
     let selectedReturns = []; 
     let selectedCheckouts = [];
@@ -391,7 +494,7 @@
     let activeAdminTab = 'loans';
     let inactivityTimer = null;
 
-    // --- 1. INITIALISATIE & SUPERSNELLE SYNC ---
+    // --- 1. INITIALISATIE ---
     window.addEventListener('DOMContentLoaded', () => {
       startLiveClock();
       
@@ -414,7 +517,7 @@
       setInterval(update, 1000);
     }
 
-    // --- 2. DATA OPHALEN MET CACHE-BUSTER ---
+    // --- 2. DATA OPHALEN ---
     async function fetchDataFromSheet() {
       try {
         const cacheBuster = `_t=${Date.now()}`;
@@ -433,29 +536,42 @@
           }
         }
       } catch (err) {
-        console.warn("Kon data niet direct updaten, lokale cache blijft behouden:", err);
+        console.warn("Laden via cache:", err);
       }
     }
 
-    // --- 3. ADMIN TAB BADGES BIJWERKEN ---
+    // --- 3. ADMIN BADGES & HELPERS ---
     function updateAdminTabBadges() {
       const issuesCount = (rawData.issues || []).length;
       const loansCount = (rawData.activeLoans || []).length;
+      const noticesCount = (rawData.notices || []).length;
 
       const badgeIssues = document.getElementById('badgeIssuesCount');
       if (badgeIssues) {
         badgeIssues.textContent = issuesCount;
-        if (issuesCount > 0) {
-          badgeIssues.className = "px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse";
-        } else {
-          badgeIssues.className = "px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-600 font-bold";
-        }
+        badgeIssues.className = issuesCount > 0 ? "px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-black animate-pulse" : "px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-600 font-bold";
       }
 
       const badgeLoans = document.getElementById('badgeLoansCount');
-      if (badgeLoans) {
-        badgeLoans.textContent = loansCount;
-      }
+      if (badgeLoans) badgeLoans.textContent = loansCount;
+
+      const badgeNotices = document.getElementById('badgeNoticesCount');
+      if (badgeNotices) badgeNotices.textContent = noticesCount;
+    }
+
+    function getItemIssue(category, item, number) {
+      return (rawData.issues || []).find(i => 
+        i.category === category && 
+        i.item.toString() === item.toString() && 
+        (parseInt(i.number, 10) || 1) === (parseInt(number, 10) || 1)
+      );
+    }
+
+    function getItemNotice(category, item) {
+      return (rawData.notices || []).find(n => 
+        n.category === category && 
+        n.item.toString() === item.toString()
+      );
     }
 
     // --- 4. DOCENT SELECTIE ---
@@ -522,20 +638,12 @@
       }
     }
 
-    // --- 5. DASHBOARD WEERGAVE ---
+    // --- 5. DASHBOARD ROOSTERS ---
     function renderDashboard() {
       updateActionBadge();
       renderInPossessionSection();
       renderTabletsSection();
       renderMaterialSection();
-    }
-
-    function getItemIssue(category, item, number) {
-      return (rawData.issues || []).find(i => 
-        i.category === category && 
-        i.item.toString() === item.toString() && 
-        (parseInt(i.number, 10) || 1) === (parseInt(number, 10) || 1)
-      );
     }
 
     function renderInPossessionSection() {
@@ -764,7 +872,7 @@
       }
     }
 
-    // --- 7. REVIEW OVERZICHT & POTLOODJE ---
+    // --- 7. REVIEW MODAL & KANTOORMEDEDELINGEN ---
     function updateActionBadge() {
       const totalActions = selectedReturns.length + selectedCheckouts.length;
       document.getElementById('actionBadge').textContent = `${totalActions} actie${totalActions === 1 ? '' : 's'}`;
@@ -808,26 +916,58 @@
     function createReviewRow(item, actionType) {
       const key = `${item.category}_${item.item}_${item.number}`;
       const hasReport = pendingReports[key];
+      const existingIssue = getItemIssue(item.category, item.item, item.number);
+      const notice = getItemNotice(item.category, item.item);
 
       const row = document.createElement('div');
-      row.className = "flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white shadow-xs";
+      
+      // Oranje styling bij schade-item
+      const isOrange = Boolean(existingIssue);
+      row.className = `flex items-center justify-between p-3 rounded-xl border transition ${
+        isOrange 
+          ? 'bg-amber-50/90 border-amber-300 ring-1 ring-amber-300' 
+          : 'bg-white border-slate-200 shadow-xs'
+      }`;
 
       const numLabel = item.category === 'Materiaal' ? ` (Nr ${item.number})` : '';
 
+      // Alarmicoontje popover
+      const safeNoticeText = notice ? notice.text.replace(/"/g, '&quot;').replace(/'/g, "\\'") : '';
+      const noticeHtml = notice 
+        ? `<button onclick="showNoticeModal('${safeNoticeText}')" class="text-lg animate-siren px-1.5 py-0.5 rounded hover:bg-amber-100/50" title="Klik voor kantoormededeling">🚨</button>` 
+        : '';
+
       row.innerHTML = `
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2.5 flex-1 pr-2">
           <span class="text-base">${item.category === 'Tablet' ? '📱' : '📦'}</span>
-          <div>
-            <span class="font-bold text-slate-800 text-sm">${item.item}${numLabel}</span>
-            ${hasReport ? `<p class="text-xs text-amber-700 font-semibold mt-0.5">⚠️ ${hasReport.type}: ${hasReport.text}</p>` : ''}
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800 text-sm">${item.item}${numLabel}</span>
+              ${isOrange ? `<span class="text-[10px] font-extrabold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">⚠️ Let op: ${existingIssue.type}</span>` : ''}
+            </div>
+            ${existingIssue ? `<p class="text-xs text-amber-800 mt-0.5 italic">"${existingIssue.description}" (${existingIssue.teacher})</p>` : ''}
+            ${hasReport ? `<p class="text-xs text-rose-700 font-semibold mt-0.5">⚠️ Jouw nieuwe melding (${hasReport.type}): ${hasReport.text}</p>` : ''}
           </div>
         </div>
-        <button onclick="openReportModal('${item.category}', '${item.item}', ${item.number})" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border flex items-center gap-1 transition ${hasReport ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}">
-          ✏️ ${hasReport ? 'Melding Wijzigen' : 'Melding Maken'}
-        </button>
+
+        <div class="flex items-center gap-2">
+          ${noticeHtml}
+          <button onclick="openReportModal('${item.category}', '${item.item}', ${item.number})" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border flex items-center gap-1 transition ${hasReport ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}">
+            ✏️ ${hasReport ? 'Wijzigen' : 'Melden'}
+          </button>
+        </div>
       `;
 
       return row;
+    }
+
+    function showNoticeModal(text) {
+      document.getElementById('noticeModalText').textContent = text;
+      document.getElementById('noticeModal').classList.remove('hidden');
+    }
+
+    function closeNoticeModal() {
+      document.getElementById('noticeModal').classList.add('hidden');
     }
 
     // --- 8. DEFECT / VERMIST MELDEN ---
@@ -883,14 +1023,17 @@
       openReviewModal();
     }
 
-    // --- 9. FINALE TRANSACTIE & HARDE RELOAD ---
+    // --- 9. FULLSCREEN SYNC & OFFLINE FOUTAFHANDELING ---
     async function executeFinalTransaction() {
-      const btn = document.getElementById('btnFinalSubmit');
-      btn.disabled = true;
-      btn.textContent = "Verwerken in Google Sheets...";
+      // 1. Schakel timer uit zodat het scherm niet wegspringt
+      clearTimeout(inactivityTimer);
+
+      // 2. Toon fullscreen sync animatie
+      document.getElementById('syncFullscreenModal').classList.remove('hidden');
+      document.getElementById('syncStateProcessing').classList.remove('hidden');
+      document.getElementById('syncStateError').classList.add('hidden');
 
       const reportsArray = Object.values(pendingReports);
-
       const payload = {
         action: "processTransaction",
         teacher: currentTeacher,
@@ -900,28 +1043,37 @@
       };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 sec timeout
+
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
           headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
 
-        btn.className = "flex-1 bg-emerald-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg";
-        btn.textContent = "✓ Succesvol Opgeslagen!";
+        clearTimeout(timeoutId);
 
+        // Korte pauze voor visuele feedback, daarna harde reload
         setTimeout(() => {
           window.location.reload();
         }, 1500);
 
       } catch (err) {
-        alert("Fout bij opslaan. Controleer je internetverbinding.");
-        btn.disabled = false;
-        btn.textContent = "Definitief Opslaan & Afronden";
+        // Foutafhandeling bij slechte wifi
+        document.getElementById('syncStateProcessing').classList.add('hidden');
+        document.getElementById('syncStateError').classList.remove('hidden');
       }
     }
 
-    // --- 10. PATCH NOTES & ADMIN ---
+    function cancelSyncAndReturnToReview() {
+      document.getElementById('syncFullscreenModal').classList.add('hidden');
+      resetInactivityTimer(); // Herstart timer
+    }
+
+    // --- 10. PATCH NOTES & ADMIN FUNCTIONALITEIT ---
     function openPatchNotesModal() {
       document.getElementById('patchNotesModal').classList.remove('hidden');
     }
@@ -949,6 +1101,7 @@
         document.getElementById('adminPinView').classList.add('hidden');
         document.getElementById('adminDashboardView').classList.remove('hidden');
         updateAdminTabBadges();
+        populateNoticeItemOptions();
         switchAdminTab('loans');
       } else {
         document.getElementById('adminPinError').classList.remove('hidden');
@@ -958,13 +1111,18 @@
     function switchAdminTab(tab) {
       activeAdminTab = tab;
       
-      document.getElementById('adminTabBtnLoans').className = tab === 'loans' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
-      document.getElementById('adminTabBtnIssues').className = tab === 'issues' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
-      document.getElementById('adminTabBtnLogs').className = tab === 'logs' ? "px-4 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-4 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
+      const getTabClass = (active) => active ? "px-3.5 py-2 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-xs flex items-center gap-1.5" : "px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5";
+
+      document.getElementById('adminTabBtnLoans').className = getTabClass(tab === 'loans');
+      document.getElementById('adminTabBtnIssues').className = getTabClass(tab === 'issues');
+      document.getElementById('adminTabBtnNotices').className = getTabClass(tab === 'notices');
+      document.getElementById('adminTabBtnLogs').className = getTabClass(tab === 'logs');
 
       document.getElementById('adminSectionLoans').classList.toggle('hidden', tab !== 'loans');
       document.getElementById('adminSectionIssues').classList.toggle('hidden', tab !== 'issues');
+      document.getElementById('adminSectionNotices').classList.toggle('hidden', tab !== 'notices');
       document.getElementById('adminSectionLogs').classList.toggle('hidden', tab !== 'logs');
+      document.getElementById('adminSearchContainer').classList.toggle('hidden', tab === 'notices');
 
       renderActiveAdminTab();
     }
@@ -1013,7 +1171,7 @@
         const filtered = (rawData.issues || []).filter(i => matchesTerms(`${i.category} ${i.item} ${i.number} ${i.teacher} ${i.type} ${i.description}`));
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 text-xs">Geen openstaande schade of vermissingen gemeld.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 text-xs">Geen openstaande meldingen.</td></tr>`;
           return;
         }
 
@@ -1029,6 +1187,37 @@
             <td class="p-2.5 text-right">
               <button onclick="adminResolveIssue(${issue.rowId})" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded font-bold transition">
                 ✓ Opgelost
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      if (activeAdminTab === 'notices') {
+        const tbody = document.getElementById('adminNoticesTableBody');
+        tbody.innerHTML = '';
+        const list = rawData.notices || [];
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400 text-xs">Geen actieve kantoormededelingen ingesteld.</td></tr>`;
+          return;
+        }
+
+        list.forEach(n => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 transition text-xs";
+          const safeText = n.text.replace(/'/g, "\\'");
+          tr.innerHTML = `
+            <td class="p-2.5 font-bold text-slate-800">${n.category}: ${n.item}</td>
+            <td class="p-2.5 text-slate-700">${n.text}</td>
+            <td class="p-2.5 text-slate-400">${n.date}</td>
+            <td class="p-2.5 text-right space-x-1">
+              <button onclick="editNotice(${n.rowId}, '${n.category}', '${n.item}', '${safeText}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border px-2 py-1 rounded font-semibold transition">
+                Wijzigen
+              </button>
+              <button onclick="deleteNotice(${n.rowId})" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-2 py-1 rounded font-semibold transition">
+                Verwijderen
               </button>
             </td>
           `;
@@ -1061,6 +1250,88 @@
       }
     }
 
+    // Admin Mededelingen Handlers
+    function populateNoticeItemOptions() {
+      const cat = document.getElementById('noticeCategorySelect').value;
+      const select = document.getElementById('noticeItemSelect');
+      select.innerHTML = '';
+
+      if (cat === 'Tablet') {
+        (rawData.tablets || []).forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.name;
+          opt.textContent = t.name;
+          select.appendChild(opt);
+        });
+      } else {
+        (rawData.materialen || []).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.code;
+          opt.textContent = `Les ${m.code} (${m.type})`;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    async function saveAdminNotice() {
+      const category = document.getElementById('noticeCategorySelect').value;
+      const item = document.getElementById('noticeItemSelect').value;
+      const text = document.getElementById('noticeTextInput').value.trim();
+      const rowId = document.getElementById('noticeEditingRowId').value;
+
+      if (!text) {
+        alert("Typ een mededeling in.");
+        return;
+      }
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "adminSaveNotice", pin: "1115", category, item, text, rowId: rowId ? parseInt(rowId, 10) : null })
+        });
+        cancelNoticeEdit();
+        fetchDataFromSheet();
+      } catch (e) {
+        alert("Fout bij opslaan van mededeling.");
+      }
+    }
+
+    function editNotice(rowId, category, item, text) {
+      document.getElementById('noticeCategorySelect').value = category;
+      populateNoticeItemOptions();
+      document.getElementById('noticeItemSelect').value = item;
+      document.getElementById('noticeTextInput').value = text;
+      document.getElementById('noticeEditingRowId').value = rowId;
+
+      document.getElementById('btnCancelNoticeEdit').classList.remove('hidden');
+      document.getElementById('btnSaveNotice').textContent = "Wijziging Opslaan";
+    }
+
+    function cancelNoticeEdit() {
+      document.getElementById('noticeTextInput').value = '';
+      document.getElementById('noticeEditingRowId').value = '';
+      document.getElementById('btnCancelNoticeEdit').classList.add('hidden');
+      document.getElementById('btnSaveNotice').textContent = "Mededeling Opslaan";
+    }
+
+    async function deleteNotice(rowId) {
+      if (!confirm("Weet je zeker dat je deze mededeling wilt verwijderen?")) return;
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "adminDeleteNotice", pin: "1115", rowId })
+        });
+        fetchDataFromSheet();
+      } catch (e) {
+        alert("Fout bij verwijderen.");
+      }
+    }
+
     async function adminReleaseItem(category, item, number) {
       if (!confirm(`Handmatig ${item} (Nr ${number}) vrijgeven?`)) return;
 
@@ -1071,7 +1342,6 @@
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminRelease", pin: "1115", category, item, number })
         });
-        alert("Item is vrijgegeven!");
         fetchDataFromSheet();
       } catch(e) { alert("Fout bij vrijgeven."); }
     }
@@ -1086,7 +1356,6 @@
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminResolveIssue", pin: "1115", rowId })
         });
-        alert("Melding gemarkeerd als opgelost!");
         fetchDataFromSheet();
       } catch(e) { alert("Fout bij markeren als opgelost."); }
     }
@@ -1095,7 +1364,9 @@
     function setupInactivityListeners() {
       ['click', 'touchstart', 'mousemove', 'keypress'].forEach(evt => {
         window.addEventListener(evt, () => {
-          if (currentTeacher) resetInactivityTimer();
+          if (currentTeacher && document.getElementById('syncFullscreenModal').classList.contains('hidden')) {
+            resetInactivityTimer();
+          }
         });
       });
     }
@@ -1103,7 +1374,9 @@
     function resetInactivityTimer() {
       clearTimeout(inactivityTimer);
       inactivityTimer = setTimeout(() => {
-        if (currentTeacher) logoutTeacher(true);
+        if (currentTeacher && document.getElementById('syncFullscreenModal').classList.contains('hidden')) {
+          logoutTeacher(true);
+        }
       }, 120000);
     }
   </script>
