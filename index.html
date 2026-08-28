@@ -126,11 +126,11 @@
           <div id="tabletGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2.5"></div>
         </div>
 
-        <!-- 2.3 MATERIAAL -->
+        <!-- 2.3 MATERIAAL (DOZEN, TASSEN & MAPPEN) -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              📚 Lesmateriaal (Dozen &amp; Tassen)
+              📚 Lesmateriaal (Dozen, Tassen &amp; Mappen)
             </h2>
             <span class="text-xs text-slate-400">Tik op een les om exemplaar 1, 2, 3... te kiezen</span>
           </div>
@@ -140,7 +140,7 @@
       </div>
     </section>
 
-    <!-- ACTIEKNOP: OP TOUCH/MOBIEL ONDERAAN, OP DESKTOP FLOATING RECHTSONDER -->
+    <!-- ACTIEKNOP -->
     <div id="dashboardFooterAction" class="hidden fixed bottom-4 left-3 right-3 lg:bottom-12 lg:right-6 lg:left-auto z-40">
       <button 
         id="btnOpenReviewModal" 
@@ -157,7 +157,7 @@
   <!-- ==================== FOOTER (STARTPAGINA OVERAL; DASHBOARD ALLEEN COMPUTER) ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0">
     <div class="flex items-center">
-      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v1.7</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v1.8</span>
       <button onclick="openPatchNotesModal()" class="ml-1.5 sm:ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right truncate ml-2">
@@ -244,7 +244,7 @@
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.7</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v1.8</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -252,22 +252,21 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.7 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 1.8 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Slimme Footer Logica:</strong> Altijd zichtbaar op computers; op telefoons en tablets uitsluitend zichtbaar op het startscherm.</li>
-            <li><strong>Geen Overlap:</strong> De bevestigingsknop krijgt op mobiel en tablet automatisch alle ruimte zonder elementen te bedekken.</li>
+            <li><strong>Tekstaanpassingen:</strong> 'Dozen, tassen en mappen' in de Admin Kantoor Tips dropdown en 'Dozen, Tassen &amp; Mappen' in het hoofdrooster.</li>
+          </ul>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 1.7</span>
+          <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
+            <li>Slimme footerlogica (altijd op PC, alleen landingspagina op mobiel/tablet).</li>
           </ul>
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
           <span class="font-bold text-slate-800 text-xs">📦 Versie 1.6</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Zwevende knop boven de footerbalk.</li>
-          </ul>
-        </div>
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 1.5</span>
-          <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Mediawegwijs logo op landingspagina + 🚨 Kantoor Tips in adminpaneel.</li>
+            <li>Zwevende knop boven footerbalk.</li>
           </ul>
         </div>
       </div>
@@ -455,13 +454,13 @@
             </table>
           </div>
 
-          <!-- TAB 3: Kantoor Tips -->
+          <!-- TAB 3: Kantoor Tips (Aangepaste Dropdown) -->
           <div id="adminSectionNotices" class="hidden space-y-4">
             <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
               <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700">Nieuwe Kantoor Tip Koppelen</h5>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <select id="noticeCategorySelect" onchange="populateNoticeItemOptions()" class="text-xs p-2.5 border rounded-lg bg-white">
-                  <option value="Materiaal">Materiaal (Lescode)</option>
+                  <option value="Materiaal">Dozen, tassen en mappen</option>
                   <option value="Tablet">Tablet Set</option>
                 </select>
                 <select id="noticeItemSelect" class="text-xs p-2.5 border rounded-lg bg-white"></select>
@@ -518,7 +517,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
     // Versie controle & Cache Buster
-    const CURRENT_APP_VERSION = "1.7";
+    const CURRENT_APP_VERSION = "1.8";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
@@ -676,7 +675,6 @@
       document.getElementById('screenDashboard').classList.remove('hidden');
       document.getElementById('dashboardFooterAction').classList.remove('hidden');
 
-      // SLIMME FOOTER LOGICA: Op het dashboard alleen zichtbaar op computers (lg:flex), verborgen op tablets/telefoons (hidden)
       const footer = document.getElementById('mainFooter');
       if (footer) {
         footer.className = "bg-white border-t border-slate-200 px-4 sm:px-6 py-2 hidden lg:flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0";
@@ -701,7 +699,6 @@
       document.getElementById('screenSelectTeacher').classList.remove('hidden');
       document.getElementById('teacherSearchInput').value = '';
 
-      // SLIMME FOOTER LOGICA: Op het startscherm altijd overal zichtbaar (flex)
       const footer = document.getElementById('mainFooter');
       if (footer) {
         footer.className = "bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0";
