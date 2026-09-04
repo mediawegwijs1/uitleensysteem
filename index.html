@@ -167,7 +167,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0">
     <div class="flex items-center">
-      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.3</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.4</span>
       <button onclick="openPatchNotesModal()" class="ml-1.5 sm:ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right truncate ml-2">
@@ -261,12 +261,55 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: OVERDRAGEN NAAR ANDERE DOCENT ==================== -->
+  <div id="adminTransferModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[90]">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between mb-3 border-b pb-3">
+        <div>
+          <h3 id="transferModalTitle" class="text-base font-extrabold text-slate-800">Spullen Overdragen</h3>
+          <p class="text-xs text-slate-400">Draag geselecteerde materialen direct over aan een collega</p>
+        </div>
+        <button onclick="closeTransferModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+
+      <div class="space-y-4 flex-1 overflow-y-auto custom-scroll pr-1 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Overdragen aan collega:</label>
+          <select id="transferTargetTeacherSelect" onchange="updateTransferSubmitState()" class="w-full text-xs p-3 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-indigo-600 focus:bg-white focus:outline-none font-semibold">
+          </select>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-bold text-slate-700">Selecteer items om over te dragen:</label>
+            <button type="button" onclick="toggleAllTransferItems()" class="text-[11px] text-indigo-600 hover:underline font-semibold" id="btnToggleAllTransfer">Alles deselecteren</button>
+          </div>
+          <div id="transferItemsList" class="space-y-2 max-h-52 overflow-y-auto custom-scroll bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 bg-amber-50 border border-amber-200 rounded-xl p-2.5 leading-relaxed">
+          💡 <strong>Let op:</strong> De leentijd wordt voor de nieuwe docent automatisch gereset naar vandaag (0 dagen in bezit).
+        </p>
+      </div>
+
+      <div class="flex gap-2 pt-2 border-t">
+        <button onclick="closeTransferModal()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
+          Annuleren
+        </button>
+        <button id="btnExecuteTransfer" onclick="executeAdminTransfer(this)" class="w-2/3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Overdracht Bevestigen
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== MODAL: PATCH NOTES ==================== -->
   <div id="patchNotesModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.3</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.4</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -274,12 +317,11 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.3 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.4 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Lazy Loading Geschiedenis:</strong> Logboek wordt pas opgehaald bij het openen van het tabblad; app start daardoor direct op.</li>
-            <li><strong>Offline Wachtrij (PWA):</strong> Transacties worden lokaal gebufferd als de wifi hapert en op de achtergrond gesynchroniseerd.</li>
-            <li><strong>Service Worker:</strong> Startscherm opent ook bij weggevallen verbinding razendsnel.</li>
-            <li><strong>UI Fix:</strong> Modals sluiten direct bij het afronden om overlap te voorkomen.</li>
+            <li><strong>Write-First &amp; Keepalive:</strong> Transacties worden lokaal opgeslagen vóór verzending en voltooien op smartphones zelfs als het browsertabblad direct wordt afgesloten.</li>
+            <li><strong>Beheer-Overdracht:</strong> Admin kan spullen via Live Uitgeleend direct overdragen naar een collega met automatische datumreset naar vandaag.</li>
+            <li><strong>Header-Garantie:</strong> Sheet-tabbladen genereren altijd automatisch koppen op rij 1.</li>
           </ul>
         </div>
       </div>
@@ -469,7 +511,7 @@
             />
           </div>
 
-          <!-- TAB 1: Live Uitgeleend -->
+          <!-- TAB 1: Live Uitgeleend (Met Overdragen Knop) -->
           <div id="adminSectionLoans" class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <div class="flex gap-2">
@@ -590,7 +632,7 @@
     // PAS DEZE URL AAN MET JE EIGEN APPS SCRIPT WEB APP URL:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
-    const CURRENT_APP_VERSION = "2.3";
+    const CURRENT_APP_VERSION = "2.4";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
@@ -620,6 +662,7 @@
 
     let isHistoryLoaded = false;
     let isHistoryLoading = false;
+    let currentTransferFromTeacher = null;
 
     // --- DATUM PARSERS & HELPERS ---
     function parseDate(dateStr) {
@@ -928,12 +971,12 @@
       selectedCheckouts = [];
       pendingReports = {};
 
-      // Sluit gegarandeerd alle modals bij terugkeer naar start
       document.getElementById('reviewModal').classList.add('hidden');
       document.getElementById('numberModal').classList.add('hidden');
       document.getElementById('reportModal').classList.add('hidden');
       document.getElementById('overdueInterventionModal').classList.add('hidden');
       document.getElementById('noticeModal').classList.add('hidden');
+      document.getElementById('adminTransferModal').classList.add('hidden');
       document.getElementById('syncFullscreenModal').classList.add('hidden');
 
       document.getElementById('screenDashboard').classList.add('hidden');
@@ -1426,7 +1469,7 @@
       openReviewModal();
     }
 
-    // --- 9. FULLSCREEN SYNC & OFFLINE WACHTRIJ ---
+    // --- 9. FULLSCREEN SYNC (WRITE-FIRST & KEEPALIVE) ---
     function getOfflineQueue() {
       return JSON.parse(localStorage.getItem('mww_offline_queue') || '[]');
     }
@@ -1460,6 +1503,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify(item.payload)
         });
@@ -1477,8 +1521,6 @@
 
     async function executeFinalTransaction() {
       clearTimeout(inactivityTimer);
-
-      // Sluit direct de controlemodal zodat deze nooit achterblijft
       closeReviewModal();
 
       document.getElementById('syncFullscreenModal').classList.remove('hidden');
@@ -1493,6 +1535,7 @@
         reports: reportsArray
       };
 
+      // 1. Optimistische voorraadupdate lokaal
       const nowStr = formatCleanDateTime(new Date());
       selectedReturns.forEach(ret => {
         rawData.activeLoans = (rawData.activeLoans || []).filter(l => 
@@ -1510,16 +1553,13 @@
       });
       localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
 
-      if (!navigator.onLine) {
-        const queue = getOfflineQueue();
-        queue.push({ id: Date.now(), payload: payload });
-        saveOfflineQueue(queue);
+      // 2. WRITE-FIRST: direct lokaal bufferen VOORDAT het netwerk wordt aangesproken
+      const txId = "tx_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+      const queue = getOfflineQueue();
+      queue.push({ id: txId, payload: payload });
+      saveOfflineQueue(queue);
 
-        document.getElementById('syncStatusMessage').textContent = "Offline opgeslagen! Wordt verzonden zodra er wifi is.";
-        setTimeout(() => logoutTeacher(false), 2000);
-        return;
-      }
-
+      // 3. Verzenden met keepalive: true (blijft lopen zelfs als scherm direct sluit)
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1527,12 +1567,17 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify(payload),
           signal: controller.signal
         });
 
         clearTimeout(timeoutId);
+
+        // Succesvol afgeleverd: verwijder uit wachtrij
+        const cleanQueue = getOfflineQueue().filter(q => q.id !== txId);
+        saveOfflineQueue(cleanQueue);
 
         setTimeout(() => {
           document.getElementById('syncFullscreenModal').classList.add('hidden');
@@ -1541,19 +1586,15 @@
         }, 1200);
 
       } catch (err) {
-        const queue = getOfflineQueue();
-        queue.push({ id: Date.now(), payload: payload });
-        saveOfflineQueue(queue);
-
-        document.getElementById('syncStatusMessage').textContent = "Verbinding haperde: opgeslagen op tablet en verzendt op de achtergrond!";
+        document.getElementById('syncStatusMessage').textContent = "Veilig opgeslagen op tablet! Wordt op de achtergrond verzonden.";
         setTimeout(() => {
           document.getElementById('syncFullscreenModal').classList.add('hidden');
           logoutTeacher(false);
-        }, 2200);
+        }, 2000);
       }
     }
 
-    // --- 10. ADMIN PANEEL ---
+    // --- 10. ADMIN PANEEL & OVERDRAGEN ---
     function openPatchNotesModal() {
       document.getElementById('patchNotesModal').classList.remove('hidden');
     }
@@ -1653,7 +1694,7 @@
     function renderActiveAdminTab() {
       const query = document.getElementById('adminSearchInput').value;
 
-      // TAB 1: Live Uitgeleend
+      // TAB 1: Live Uitgeleend (Met Overdracht-actie)
       if (activeAdminTab === 'loans') {
         const container = document.getElementById('adminLoansGroupedContainer');
         container.innerHTML = '';
@@ -1741,15 +1782,20 @@
           });
 
           card.innerHTML = `
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-100 pb-2.5 gap-2">
+              <div class="flex items-center gap-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs">👤</span>
-                ${teacher}
+                <span class="font-extrabold text-slate-800 text-sm">${teacher}</span>
                 ${headerTagHtml}
-              </span>
-              <span class="text-[11px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                ${items.length} item${items.length === 1 ? '' : 's'} in bezit
-              </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="openTransferModal('${teacher.replace(/'/g, "\\'")}')" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 active:scale-95 shadow-xs">
+                  🔁 Overdragen
+                </button>
+                <span class="text-[11px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-200">
+                  ${items.length} item${items.length === 1 ? '' : 's'} in bezit
+                </span>
+              </div>
             </div>
             <div class="space-y-1.5">${rowsHtml}</div>
           `;
@@ -1906,6 +1952,112 @@
       }
     }
 
+    // --- OVERDRACHT LOGICA ---
+    function openTransferModal(fromTeacher) {
+      currentTransferFromTeacher = fromTeacher;
+      document.getElementById('transferModalTitle').textContent = `Spullen overdragen van ${fromTeacher}`;
+      
+      const select = document.getElementById('transferTargetTeacherSelect');
+      select.innerHTML = '<option value="">-- Kies een collega --</option>';
+      const teachers = (rawData.docenten || []).filter(t => t.toLowerCase() !== fromTeacher.toLowerCase());
+      teachers.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        select.appendChild(opt);
+      });
+
+      const list = document.getElementById('transferItemsList');
+      list.innerHTML = '';
+      const teacherLoans = (rawData.activeLoans || []).filter(l => l.teacher.toLowerCase() === fromTeacher.toLowerCase());
+      const sorted = sortItemsUniform(teacherLoans);
+
+      sorted.forEach((l) => {
+        const numLabel = l.category === 'Materiaal' ? ` (Nr ${l.number})` : '';
+        const row = document.createElement('label');
+        row.className = "flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 hover:bg-indigo-50/50 cursor-pointer text-xs";
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="transfer-item-checkbox rounded text-indigo-600 focus:ring-0 w-4 h-4 cursor-pointer" data-cat="${l.category}" data-item="${l.item}" data-num="${l.number}" checked onchange="updateTransferSubmitState()" />
+            <span class="font-bold text-slate-800">${l.category === 'Tablet' ? '📱' : '📦'} ${l.item}${numLabel}</span>
+          </div>
+          <span class="text-[10px] text-slate-400">${formatCleanDateTime(l.timestamp)}</span>
+        `;
+        list.appendChild(row);
+      });
+
+      document.getElementById('btnToggleAllTransfer').textContent = "Alles deselecteren";
+      updateTransferSubmitState();
+      document.getElementById('adminTransferModal').classList.remove('hidden');
+    }
+
+    function closeTransferModal() {
+      document.getElementById('adminTransferModal').classList.add('hidden');
+      currentTransferFromTeacher = null;
+    }
+
+    function toggleAllTransferItems() {
+      const checkboxes = document.querySelectorAll('.transfer-item-checkbox');
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      checkboxes.forEach(cb => cb.checked = !anyChecked);
+      document.getElementById('btnToggleAllTransfer').textContent = !anyChecked ? "Alles deselecteren" : "Alles selecteren";
+      updateTransferSubmitState();
+    }
+
+    function updateTransferSubmitState() {
+      const targetTeacher = document.getElementById('transferTargetTeacherSelect').value;
+      const checkedCount = document.querySelectorAll('.transfer-item-checkbox:checked').length;
+      const btn = document.getElementById('btnExecuteTransfer');
+      btn.disabled = (!targetTeacher || checkedCount === 0);
+    }
+
+    async function executeAdminTransfer(btnElement) {
+      const toTeacher = document.getElementById('transferTargetTeacherSelect').value;
+      if (!toTeacher || !currentTransferFromTeacher) return;
+
+      const checkboxes = document.querySelectorAll('.transfer-item-checkbox:checked');
+      const items = Array.from(checkboxes).map(cb => ({
+        category: cb.getAttribute('data-cat'),
+        item: cb.getAttribute('data-item'),
+        number: parseInt(cb.getAttribute('data-num'), 10) || 1
+      }));
+
+      if (items.length === 0) {
+        alert("Selecteer minimaal 1 item om over te dragen.");
+        return;
+      }
+
+      if (btnElement) {
+        btnElement.disabled = true;
+        btnElement.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Overdragen...`;
+      }
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "adminTransfer",
+            pin: "1115",
+            fromTeacher: currentTransferFromTeacher,
+            toTeacher: toTeacher,
+            items: items
+          })
+        });
+
+        closeTransferModal();
+        fetchDataFromSheet(true);
+      } catch (e) {
+        alert("Fout bij overdragen van spullen.");
+        if (btnElement) {
+          btnElement.disabled = false;
+          btnElement.textContent = "Overdracht Bevestigen";
+        }
+      }
+    }
+
     // --- OVERTREDINGEN DETAILS & KWIJTSCHELDEN ---
     function openTeacherViolationsModal(teacher) {
       document.getElementById('violationModalTeacherTitle').textContent = `Overtredingen van ${teacher}`;
@@ -1944,6 +2096,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminKwijtschelden", pin: "1115", violationId, reason })
         });
@@ -1998,6 +2151,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminSaveNotice", pin: "1115", category, item, text, context, rowId: rowId ? parseInt(rowId, 10) : null })
         });
@@ -2042,6 +2196,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminDeleteNotice", pin: "1115", rowId })
         });
@@ -2064,6 +2219,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminRelease", pin: "1115", category, item, number })
         });
@@ -2084,6 +2240,7 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
+          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminResolveIssue", pin: "1115", rowId })
         });
