@@ -1,9 +1,9 @@
 /**
- * Mediawegwijs Service Worker v2.3
- * Zorgt dat de app ook offline en bij haperende wifi direct opstart.
+ * Mediawegwijs Service Worker v2.4
+ * Network-First voor altijd de laatste versie, met offline-fallback.
  */
 
-const CACHE_NAME = 'mww-app-cache-v2.3';
+const CACHE_NAME = 'mww-app-cache-v2.4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -13,9 +13,8 @@ const ASSETS_TO_CACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -34,23 +33,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Google Apps Script API calls altijd via het netwerk laten gaan (offline queue regelt dit in index.html)
+  // Google Apps Script API calls altijd direct via het netwerk
   if (event.request.url.includes('script.google.com')) {
     return;
   }
 
+  // Network-First voor HTML/bestanden: probeer eerst internet, val bij storing terug op cache
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Cache eerst, update op achtergrond (stale-while-revalidate)
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
