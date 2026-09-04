@@ -41,9 +41,15 @@
 
   <!-- ==================== HEADER ==================== -->
   <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm z-30 h-14 shrink-0">
-    <div id="liveClock" onclick="handleClockClick()" class="cursor-pointer text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2 select-none active:opacity-60" title="Tik 5x om cache te wissen">
-      <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span id="dateText">Laden...</span>
+    <div class="flex items-center gap-2 sm:gap-3">
+      <div id="liveClock" onclick="handleClockClick()" class="cursor-pointer text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2 select-none active:opacity-60" title="Tik 5x om cache te wissen">
+        <span id="connectionDot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="dateText">Laden...</span>
+      </div>
+      <!-- Offline wachtrij indicator badge -->
+      <span id="offlineQueueBadge" class="hidden text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+        ⏳ <span id="offlineQueueCount">0</span> wachtrij
+      </span>
     </div>
 
     <div id="headerUserContainer" class="hidden flex items-center gap-2 sm:gap-3 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full shadow-inner">
@@ -162,7 +168,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0">
     <div class="flex items-center">
-      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.2</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.3</span>
       <button onclick="openPatchNotesModal()" class="ml-1.5 sm:ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right truncate ml-2">
@@ -205,24 +211,7 @@
       
       <div class="mt-6 flex items-center gap-3 bg-slate-800/80 px-4 py-2.5 rounded-full border border-slate-700 shadow-inner">
         <span class="inline-block w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
-        <span class="text-xs text-slate-300 font-medium">Informatie wordt gesynchroniseerd met de server...</span>
-      </div>
-    </div>
-
-    <div id="syncStateError" class="hidden flex flex-col items-center space-y-4 max-w-md bg-white text-slate-800 p-8 rounded-3xl shadow-2xl border border-rose-200">
-      <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mb-1">⚠️</div>
-      <h3 class="text-xl font-extrabold text-slate-800">Synchronisatie Mislukt</h3>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        Er is geen stabiele internetverbinding. Je geselecteerde spullen staan nog veilig bewaard.
-      </p>
-
-      <div class="flex flex-col w-full gap-2.5 pt-2">
-        <button onclick="executeFinalTransaction()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm flex items-center justify-center gap-2">
-          <span>🔄 Opnieuw Proberen</span>
-        </button>
-        <button onclick="cancelSyncAndReturnToReview()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl transition text-xs">
-          Terug naar overzicht
-        </button>
+        <span id="syncStatusMessage" class="text-xs text-slate-300 font-medium">Informatie wordt gesynchroniseerd met de server...</span>
       </div>
     </div>
   </div>
@@ -250,10 +239,7 @@
           disabled 
           onclick="resolveInterventionIgnore()" 
           class="relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-slate-500 bg-slate-200 border border-slate-300 overflow-hidden cursor-not-allowed select-none flex items-center justify-center">
-          
-          <!-- Voortgangsbalk die meeloopt -->
           <div id="overdueProgressFill" class="absolute left-0 top-0 bottom-0 bg-slate-300/80 w-0 pointer-events-none"></div>
-          
           <span id="overdueAcknowledgeText" class="relative z-10 font-bold flex items-center gap-1.5">
             Begrepen, ik breng ze z.s.m. terug (5s)
           </span>
@@ -281,7 +267,7 @@
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.2</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.3</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -289,18 +275,17 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.2 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.3 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Rustigere Kaders:</strong> Geen randen meer om blokken bij 0 t/m 3 dagen leentijd.</li>
-            <li><strong>Kleurharmonie bij 4 dagen:</strong> Oranje kader met exact bijpassende oranje tag '4 dagen in bezit'.</li>
-            <li><strong>Rood Alarm bij 5+ dagen:</strong> Pulserend rood kader gereserveerd voor kritieke overschrijdingen.</li>
-            <li><strong>Vaste Countdown:</strong> Vult 5 seconden grijs en klikt daarna direct om naar blauw.</li>
+            <li><strong>Lazy Loading Geschiedenis:</strong> Logboek wordt pas opgehaald bij het openen van het tabblad; app start daardoor direct op.</li>
+            <li><strong>Offline Wachtrij (PWA):</strong> Transacties worden lokaal gebufferd als de wifi hapert en op de achtergrond gesynchroniseerd.</li>
+            <li><strong>Service Worker:</strong> Startscherm opent ook bij weggevallen verbinding razendsnel.</li>
           </ul>
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.1</span>
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.2</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Automatische inleverknop verwijderd bij interventie.</li>
+            <li>Rustige kaders (0-3d wit, 4d oranje, 5d+ rood) en 5s countdown knop.</li>
           </ul>
         </div>
       </div>
@@ -475,7 +460,7 @@
                 <span>📜 Geschiedenis</span>
               </button>
             </div>
-            <button onclick="fetchDataFromSheet()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border font-semibold flex items-center gap-1.5">
+            <button onclick="fetchDataFromSheet(true)" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg border font-semibold flex items-center gap-1.5">
               🔄 Verversen
             </button>
           </div>
@@ -490,7 +475,7 @@
             />
           </div>
 
-          <!-- TAB 1: Live Uitgeleend (Harmonieus Kleursysteem) -->
+          <!-- TAB 1: Live Uitgeleend -->
           <div id="adminSectionLoans" class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <div class="flex gap-2">
@@ -571,12 +556,17 @@
             </div>
           </div>
 
-          <!-- TAB 5: Geschiedenis -->
+          <!-- TAB 5: Geschiedenis (Lazy Loaded) -->
           <div id="adminSectionLogs" class="hidden space-y-3">
-            <div class="flex gap-2">
-              <button id="btnLogFilterAll" onclick="setLogFilter('all')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-xs">Alles</button>
-              <button id="btnLogFilterCheckout" onclick="setLogFilter('checkout')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border text-slate-700">🟢 Alleen Meegenomen</button>
-              <button id="btnLogFilterReturn" onclick="setLogFilter('return')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border text-slate-700">↩ Alleen Ingeleverd</button>
+            <div class="flex items-center justify-between">
+              <div class="flex gap-2">
+                <button id="btnLogFilterAll" onclick="setLogFilter('all')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-xs">Alles</button>
+                <button id="btnLogFilterCheckout" onclick="setLogFilter('checkout')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border text-slate-700">🟢 Alleen Meegenomen</button>
+                <button id="btnLogFilterReturn" onclick="setLogFilter('return')" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 border text-slate-700">↩ Alleen Ingeleverd</button>
+              </div>
+              <button onclick="fetchHistoryLogs(true)" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold underline">
+                Geschiedenis Herladen
+              </button>
             </div>
             <div class="overflow-x-auto max-h-[50vh] custom-scroll border rounded-xl">
               <table class="w-full text-left text-sm">
@@ -606,10 +596,15 @@
     // PAS DEZE URL AAN MET JE EIGEN APPS SCRIPT WEB APP URL:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
-    const CURRENT_APP_VERSION = "2.2";
+    const CURRENT_APP_VERSION = "2.3";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
+    }
+
+    // Registreer Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registratie overgeslagen:', err));
     }
 
     let rawData = JSON.parse(localStorage.getItem('mww_stock_data') || '{"docenten":[],"tablets":[],"materialen":[],"activeLoans":[],"issues":[],"notices":[],"overtredingen":[],"historyLogs":[]}');
@@ -629,6 +624,10 @@
 
     let overdueCountdown = 5;
     let overdueTimer = null;
+
+    // Status voor Lazy History Loading
+    let isHistoryLoaded = false;
+    let isHistoryLoading = false;
 
     // --- DATUM PARSERS & HELPERS ---
     function parseDate(dateStr) {
@@ -678,7 +677,6 @@
       }
     }
 
-    // --- UNIFORME SORTEERFUNCTIE ---
     function sortItemsUniform(items) {
       return [...items].sort((a, b) => {
         if (a.category === 'Tablet' && b.category !== 'Tablet') return -1;
@@ -691,15 +689,28 @@
       });
     }
 
-    // --- 1. INITIALISATIE & HARD RESET ---
+    // --- 1. INITIALISATIE, NETWERK & OFFLINE QUEUE ---
     window.addEventListener('DOMContentLoaded', () => {
       startLiveClock();
+      updateNetworkStatus();
+      updateOfflineQueueUI();
+      
       if (rawData.docenten && rawData.docenten.length > 0) {
         renderTeacherSuggestions();
         updateAdminTabBadges();
       }
       fetchDataFromSheet();
       setupInactivityListeners();
+
+      window.addEventListener('online', () => {
+        updateNetworkStatus();
+        processOfflineQueue();
+        fetchDataFromSheet(true);
+      });
+      window.addEventListener('offline', updateNetworkStatus);
+
+      // Periodiek wachtrij controleren elke 20 seconden
+      setInterval(processOfflineQueue, 20000);
     });
 
     function startLiveClock() {
@@ -710,6 +721,18 @@
       };
       update();
       setInterval(update, 1000);
+    }
+
+    function updateNetworkStatus() {
+      const dot = document.getElementById('connectionDot');
+      if (!dot) return;
+      if (navigator.onLine) {
+        dot.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+        dot.title = "Online verbonden";
+      } else {
+        dot.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500";
+        dot.title = "Offline (transacties worden lokaal bewaard)";
+      }
     }
 
     function handleClockClick() {
@@ -726,15 +749,20 @@
       }
     }
 
-    // --- 2. DATA OPHALEN ---
-    async function fetchDataFromSheet() {
+    // --- 2. DATA OPHALEN (ZONDER ZWARE GESCHIEDENIS) ---
+    async function fetchDataFromSheet(force = false) {
       try {
         const cacheBuster = `_t=${Date.now()}`;
         const res = await fetch(`${SCRIPT_URL}?action=getData&${cacheBuster}`);
         const json = await res.json();
         if (json.status === "success") {
+          // Bewaar eventueel al geladen geschiedenis lokaal
+          const existingLogs = rawData.historyLogs || [];
           rawData = json;
-          localStorage.setItem('mww_stock_data', JSON.stringify(json));
+          if (existingLogs.length > 0 && (!json.historyLogs || json.historyLogs.length === 0)) {
+            rawData.historyLogs = existingLogs;
+          }
+          localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
           renderTeacherSuggestions();
           updateAdminTabBadges();
           if (currentTeacher) {
@@ -745,7 +773,48 @@
           }
         }
       } catch (err) {
-        console.warn("Laden via cache:", err);
+        console.warn("Draait via lokale cache / offline:", err);
+      }
+    }
+
+    // --- LAZY LOADING GESCHIEDENIS ---
+    async function fetchHistoryLogs(forceRefresh = false) {
+      if (isHistoryLoading) return;
+      if (isHistoryLoaded && !forceRefresh) {
+        renderActiveAdminTab();
+        return;
+      }
+
+      isHistoryLoading = true;
+      const tbody = document.getElementById('adminLogsTableBody');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="p-8 text-center text-slate-500 text-xs">
+            <span class="inline-block w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2 align-middle"></span>
+            Geschiedenis ophalen van server...
+          </td>
+        </tr>
+      `;
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getHistory&_t=${Date.now()}`);
+        const json = await res.json();
+        if (json.status === "success") {
+          rawData.historyLogs = json.historyLogs || [];
+          isHistoryLoaded = true;
+          localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
+          renderActiveAdminTab();
+        }
+      } catch (err) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="p-6 text-center text-rose-500 text-xs">
+              Kon geschiedenis niet ophalen (geen internetverbinding).
+            </td>
+          </tr>
+        `;
+      } finally {
+        isHistoryLoading = false;
       }
     }
 
@@ -1359,13 +1428,60 @@
       openReviewModal();
     }
 
-    // --- 9. FULLSCREEN SYNC ---
+    // --- 9. FULLSCREEN SYNC & OFFLINE WACHTRIJ ---
+    function getOfflineQueue() {
+      return JSON.parse(localStorage.getItem('mww_offline_queue') || '[]');
+    }
+
+    function saveOfflineQueue(queue) {
+      localStorage.setItem('mww_offline_queue', JSON.stringify(queue));
+      updateOfflineQueueUI();
+    }
+
+    function updateOfflineQueueUI() {
+      const queue = getOfflineQueue();
+      const badge = document.getElementById('offlineQueueBadge');
+      const count = document.getElementById('offlineQueueCount');
+      if (badge && count) {
+        if (queue.length > 0) {
+          count.textContent = queue.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    async function processOfflineQueue() {
+      if (!navigator.onLine) return;
+      const queue = getOfflineQueue();
+      if (queue.length === 0) return;
+
+      const item = queue[0];
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify(item.payload)
+        });
+        queue.shift();
+        saveOfflineQueue(queue);
+        if (queue.length > 0) {
+          setTimeout(processOfflineQueue, 1500);
+        } else {
+          fetchDataFromSheet(true);
+        }
+      } catch (e) {
+        console.log("Wachtrij verzenden mislukt, probeert later opnieuw");
+      }
+    }
+
     async function executeFinalTransaction() {
       clearTimeout(inactivityTimer);
 
       document.getElementById('syncFullscreenModal').classList.remove('hidden');
       document.getElementById('syncStateProcessing').classList.remove('hidden');
-      document.getElementById('syncStateError').classList.add('hidden');
 
       const reportsArray = Object.values(pendingReports);
       const payload = {
@@ -1376,9 +1492,39 @@
         reports: reportsArray
       };
 
+      // Optimistische UI update in lokaal geheugen
+      const nowStr = formatCleanDateTime(new Date());
+      selectedReturns.forEach(ret => {
+        rawData.activeLoans = (rawData.activeLoans || []).filter(l => 
+          !(l.category === ret.category && l.item === ret.item && l.number === ret.number && l.teacher.toLowerCase() === currentTeacher.toLowerCase())
+        );
+      });
+      selectedCheckouts.forEach(chk => {
+        rawData.activeLoans.push({
+          category: chk.category,
+          item: chk.item,
+          number: chk.number,
+          teacher: currentTeacher,
+          timestamp: nowStr
+        });
+      });
+      localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
+
+      // Als apparaat offline is: direct in wachtrij opslaan en mascotte afronden
+      if (!navigator.onLine) {
+        const queue = getOfflineQueue();
+        queue.push({ id: Date.now(), payload: payload });
+        saveOfflineQueue(queue);
+
+        document.getElementById('syncStatusMessage').textContent = "Offline opgeslagen! Wordt verzonden zodra er wifi is.";
+        setTimeout(() => logoutTeacher(false), 2000);
+        return;
+      }
+
+      // Online poging met 10s time-out
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         await fetch(SCRIPT_URL, {
           method: "POST",
@@ -1391,18 +1537,23 @@
         clearTimeout(timeoutId);
 
         setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+          document.getElementById('syncFullscreenModal').classList.add('hidden');
+          logoutTeacher(false);
+          fetchDataFromSheet(true);
+        }, 1200);
 
       } catch (err) {
-        document.getElementById('syncStateProcessing').classList.add('hidden');
-        document.getElementById('syncStateError').classList.remove('hidden');
-      }
-    }
+        // Haperende wifi: val veilig terug op offline wachtrij
+        const queue = getOfflineQueue();
+        queue.push({ id: Date.now(), payload: payload });
+        saveOfflineQueue(queue);
 
-    function cancelSyncAndReturnToReview() {
-      document.getElementById('syncFullscreenModal').classList.add('hidden');
-      resetInactivityTimer();
+        document.getElementById('syncStatusMessage').textContent = "Verbinding haperde: opgeslagen op tablet en verzendt op de achtergrond!";
+        setTimeout(() => {
+          document.getElementById('syncFullscreenModal').classList.add('hidden');
+          logoutTeacher(false);
+        }, 2200);
+      }
     }
 
     // --- 10. ADMIN PANEEL ---
@@ -1458,7 +1609,11 @@
       document.getElementById('adminSectionLogs').classList.toggle('hidden', tab !== 'logs');
       document.getElementById('adminSearchContainer').classList.toggle('hidden', tab === 'notices' || tab === 'violations');
 
-      renderActiveAdminTab();
+      if (tab === 'logs' && !isHistoryLoaded) {
+        fetchHistoryLogs();
+      } else {
+        renderActiveAdminTab();
+      }
     }
 
     function matchesSmartSearch(fields, query) {
@@ -1501,7 +1656,7 @@
     function renderActiveAdminTab() {
       const query = document.getElementById('adminSearchInput').value;
 
-      // TAB 1: Live Uitgeleend (Harmonieuze kaders)
+      // TAB 1: Live Uitgeleend
       if (activeAdminTab === 'loans') {
         const container = document.getElementById('adminLoansGroupedContainer');
         container.innerHTML = '';
@@ -1543,7 +1698,6 @@
           const items = sortItemsUniform(rawItems);
           const maxDays = Math.max(...items.map(x => calculateDaysOut(x.timestamp)));
 
-          // Harmonieuze kaders en tags:
           const isCritical5Plus = maxDays >= 5;
           const isWarning4 = maxDays === 4;
 
@@ -1607,6 +1761,7 @@
         });
       }
 
+      // TAB 2: Schade & Vermissingen
       if (activeAdminTab === 'issues') {
         const tbody = document.getElementById('adminIssuesTableBody');
         tbody.innerHTML = '';
@@ -1637,6 +1792,7 @@
         });
       }
 
+      // TAB 3: Overtredingen
       if (activeAdminTab === 'violations') {
         const container = document.getElementById('adminViolationsContainer');
         container.innerHTML = '';
@@ -1675,6 +1831,7 @@
         });
       }
 
+      // TAB 4: Kantoor Tips
       if (activeAdminTab === 'notices') {
         const tbody = document.getElementById('adminNoticesTableBody');
         tbody.innerHTML = '';
@@ -1716,6 +1873,7 @@
         });
       }
 
+      // TAB 5: Geschiedenis
       if (activeAdminTab === 'logs') {
         const tbody = document.getElementById('adminLogsTableBody');
         tbody.innerHTML = '';
@@ -1793,7 +1951,7 @@
           body: JSON.stringify({ action: "adminKwijtschelden", pin: "1115", violationId, reason })
         });
         closeViolationDetailModal();
-        fetchDataFromSheet();
+        fetchDataFromSheet(true);
       } catch (e) {
         alert("Fout bij kwijtschelden.");
       }
@@ -1847,7 +2005,7 @@
           body: JSON.stringify({ action: "adminSaveNotice", pin: "1115", category, item, text, context, rowId: rowId ? parseInt(rowId, 10) : null })
         });
         cancelNoticeEdit();
-        fetchDataFromSheet();
+        fetchDataFromSheet(true);
       } catch (e) {
         alert("Fout bij opslaan van kantoor tip.");
       }
@@ -1890,7 +2048,7 @@
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminDeleteNotice", pin: "1115", rowId })
         });
-        fetchDataFromSheet();
+        fetchDataFromSheet(true);
       } catch (e) {
         alert("Fout bij verwijderen.");
       }
@@ -1912,7 +2070,7 @@
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminRelease", pin: "1115", category, item, number })
         });
-        fetchDataFromSheet();
+        fetchDataFromSheet(true);
       } catch(e) { alert("Fout bij vrijgeven."); }
     }
 
@@ -1932,7 +2090,7 @@
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminResolveIssue", pin: "1115", rowId })
         });
-        fetchDataFromSheet();
+        fetchDataFromSheet(true);
       } catch(e) { alert("Fout bij markeren als opgelost."); }
     }
 
