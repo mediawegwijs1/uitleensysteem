@@ -46,7 +46,6 @@
         <span id="connectionDot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
         <span id="dateText">Laden...</span>
       </div>
-      <!-- Offline wachtrij indicator badge -->
       <span id="offlineQueueBadge" class="hidden text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
         ⏳ <span id="offlineQueueCount">0</span> wachtrij
       </span>
@@ -280,12 +279,7 @@
             <li><strong>Lazy Loading Geschiedenis:</strong> Logboek wordt pas opgehaald bij het openen van het tabblad; app start daardoor direct op.</li>
             <li><strong>Offline Wachtrij (PWA):</strong> Transacties worden lokaal gebufferd als de wifi hapert en op de achtergrond gesynchroniseerd.</li>
             <li><strong>Service Worker:</strong> Startscherm opent ook bij weggevallen verbinding razendsnel.</li>
-          </ul>
-        </div>
-        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.2</span>
-          <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Rustige kaders (0-3d wit, 4d oranje, 5d+ rood) en 5s countdown knop.</li>
+            <li><strong>UI Fix:</strong> Modals sluiten direct bij het afronden om overlap te voorkomen.</li>
           </ul>
         </div>
       </div>
@@ -556,7 +550,7 @@
             </div>
           </div>
 
-          <!-- TAB 5: Geschiedenis (Lazy Loaded) -->
+          <!-- TAB 5: Geschiedenis -->
           <div id="adminSectionLogs" class="hidden space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex gap-2">
@@ -602,7 +596,6 @@
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
     }
 
-    // Registreer Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registratie overgeslagen:', err));
     }
@@ -625,7 +618,6 @@
     let overdueCountdown = 5;
     let overdueTimer = null;
 
-    // Status voor Lazy History Loading
     let isHistoryLoaded = false;
     let isHistoryLoading = false;
 
@@ -709,7 +701,6 @@
       });
       window.addEventListener('offline', updateNetworkStatus);
 
-      // Periodiek wachtrij controleren elke 20 seconden
       setInterval(processOfflineQueue, 20000);
     });
 
@@ -749,14 +740,13 @@
       }
     }
 
-    // --- 2. DATA OPHALEN (ZONDER ZWARE GESCHIEDENIS) ---
+    // --- 2. DATA OPHALEN ---
     async function fetchDataFromSheet(force = false) {
       try {
         const cacheBuster = `_t=${Date.now()}`;
         const res = await fetch(`${SCRIPT_URL}?action=getData&${cacheBuster}`);
         const json = await res.json();
         if (json.status === "success") {
-          // Bewaar eventueel al geladen geschiedenis lokaal
           const existingLogs = rawData.historyLogs || [];
           rawData = json;
           if (existingLogs.length > 0 && (!json.historyLogs || json.historyLogs.length === 0)) {
@@ -937,6 +927,14 @@
       selectedReturns = [];
       selectedCheckouts = [];
       pendingReports = {};
+
+      // Sluit gegarandeerd alle modals bij terugkeer naar start
+      document.getElementById('reviewModal').classList.add('hidden');
+      document.getElementById('numberModal').classList.add('hidden');
+      document.getElementById('reportModal').classList.add('hidden');
+      document.getElementById('overdueInterventionModal').classList.add('hidden');
+      document.getElementById('noticeModal').classList.add('hidden');
+      document.getElementById('syncFullscreenModal').classList.add('hidden');
 
       document.getElementById('screenDashboard').classList.add('hidden');
       document.getElementById('dashboardFooterAction').classList.add('hidden');
@@ -1480,6 +1478,9 @@
     async function executeFinalTransaction() {
       clearTimeout(inactivityTimer);
 
+      // Sluit direct de controlemodal zodat deze nooit achterblijft
+      closeReviewModal();
+
       document.getElementById('syncFullscreenModal').classList.remove('hidden');
       document.getElementById('syncStateProcessing').classList.remove('hidden');
 
@@ -1492,7 +1493,6 @@
         reports: reportsArray
       };
 
-      // Optimistische UI update in lokaal geheugen
       const nowStr = formatCleanDateTime(new Date());
       selectedReturns.forEach(ret => {
         rawData.activeLoans = (rawData.activeLoans || []).filter(l => 
@@ -1510,7 +1510,6 @@
       });
       localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
 
-      // Als apparaat offline is: direct in wachtrij opslaan en mascotte afronden
       if (!navigator.onLine) {
         const queue = getOfflineQueue();
         queue.push({ id: Date.now(), payload: payload });
@@ -1521,7 +1520,6 @@
         return;
       }
 
-      // Online poging met 10s time-out
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1543,7 +1541,6 @@
         }, 1200);
 
       } catch (err) {
-        // Haperende wifi: val veilig terug op offline wachtrij
         const queue = getOfflineQueue();
         queue.push({ id: Date.now(), payload: payload });
         saveOfflineQueue(queue);
