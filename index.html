@@ -140,7 +140,6 @@
           <div id="materialGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
         </div>
 
-        <!-- Royale spacer onderaan -->
         <div class="h-20 w-full"></div>
 
       </div>
@@ -163,7 +162,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0">
     <div class="flex items-center">
-      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.1</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.2</span>
       <button onclick="openPatchNotesModal()" class="ml-1.5 sm:ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right truncate ml-2">
@@ -228,7 +227,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: 4+ DAGEN INTERVENTIE POPUP (MET 5s DELAY & VOORTGANG) ==================== -->
+  <!-- ==================== MODAL: 4+ DAGEN INTERVENTIE POPUP (5s COUNTDOWN) ==================== -->
   <div id="overdueInterventionModal" class="hidden fixed inset-0 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-[75]">
     <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border-2 border-rose-300">
       <div class="flex items-center gap-2.5 mb-3">
@@ -245,18 +244,16 @@
         Spullen dienen binnen 1 à 2 dagen geretourneerd te worden zodat collega's ze weer kunnen gebruiken.
       </p>
 
-      <!-- Enkele knop met 5s progress bar en afteller -->
       <div>
         <button 
           id="btnOverdueAcknowledge" 
           disabled 
           onclick="resolveInterventionIgnore()" 
-          class="relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 overflow-hidden cursor-not-allowed transition select-none flex items-center justify-center">
+          class="relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-slate-500 bg-slate-200 border border-slate-300 overflow-hidden cursor-not-allowed select-none flex items-center justify-center">
           
-          <!-- Voortgangsbalk achter de tekst -->
-          <div id="overdueProgressFill" class="absolute left-0 top-0 bottom-0 bg-indigo-200/60 w-0"></div>
+          <!-- Voortgangsbalk die meeloopt -->
+          <div id="overdueProgressFill" class="absolute left-0 top-0 bottom-0 bg-slate-300/80 w-0 pointer-events-none"></div>
           
-          <!-- Knoptekst -->
           <span id="overdueAcknowledgeText" class="relative z-10 font-bold flex items-center gap-1.5">
             Begrepen, ik breng ze z.s.m. terug (5s)
           </span>
@@ -284,7 +281,7 @@
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.1</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.2</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -292,15 +289,18 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.1 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.2 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Gerichte Interventie:</strong> Automatische inleverknop verwijderd; docenten bevestigen nu via een 5-seconden countdown met vloeiende voortgangsanimatie.</li>
+            <li><strong>Rustigere Kaders:</strong> Geen randen meer om blokken bij 0 t/m 3 dagen leentijd.</li>
+            <li><strong>Kleurharmonie bij 4 dagen:</strong> Oranje kader met exact bijpassende oranje tag '4 dagen in bezit'.</li>
+            <li><strong>Rood Alarm bij 5+ dagen:</strong> Pulserend rood kader gereserveerd voor kritieke overschrijdingen.</li>
+            <li><strong>Vaste Countdown:</strong> Vult 5 seconden grijs en klikt daarna direct om naar blauw.</li>
           </ul>
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.0</span>
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.1</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
-            <li>Trapsgewijs kleursysteem, overtredingen tracking en datum-normalisatie.</li>
+            <li>Automatische inleverknop verwijderd bij interventie.</li>
           </ul>
         </div>
       </div>
@@ -490,7 +490,7 @@
             />
           </div>
 
-          <!-- TAB 1: Live Uitgeleend -->
+          <!-- TAB 1: Live Uitgeleend (Harmonieus Kleursysteem) -->
           <div id="adminSectionLoans" class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <div class="flex gap-2">
@@ -606,7 +606,7 @@
     // PAS DEZE URL AAN MET JE EIGEN APPS SCRIPT WEB APP URL:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
 
-    const CURRENT_APP_VERSION = "2.1";
+    const CURRENT_APP_VERSION = "2.2";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
@@ -623,12 +623,10 @@
     let clockClickCount = 0;
     let clockClickTimer = null;
 
-    // Filters & Sorteerstatus
     let loanFilterMode = 'all';
     let loanSortLongestFirst = true;
     let logFilterMode = 'all';
 
-    // Countdown timer voor 4+ dagen interventie
     let overdueCountdown = 5;
     let overdueTimer = null;
 
@@ -1132,7 +1130,7 @@
       }
     }
 
-    // --- 7. OVERZICHT & 4+ DAGEN COUNTDOWN INTERVENTIE ---
+    // --- 7. OVERZICHT & COUNTDOWN INTERVENTIE (5s) ---
     function updateActionBadge() {
       const totalActions = selectedReturns.length + selectedCheckouts.length;
       document.getElementById('actionBadge').textContent = `${totalActions} actie${totalActions === 1 ? '' : 's'}`;
@@ -1186,8 +1184,9 @@
       overdueCountdown = 5;
 
       btn.disabled = true;
-      btn.className = "relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-slate-400 bg-slate-100 border border-slate-200 overflow-hidden cursor-not-allowed transition select-none flex items-center justify-center";
+      btn.className = "relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-slate-500 bg-slate-200 border border-slate-300 overflow-hidden cursor-not-allowed select-none flex items-center justify-center";
       
+      fill.style.display = 'block';
       fill.style.transition = 'none';
       fill.style.width = '0%';
       textSpan.textContent = `Begrepen, ik breng ze z.s.m. terug (${overdueCountdown}s)`;
@@ -1203,9 +1202,12 @@
           textSpan.textContent = `Begrepen, ik breng ze z.s.m. terug (${overdueCountdown}s)`;
         } else {
           clearInterval(overdueTimer);
-          btn.disabled = false;
-          btn.className = "relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 overflow-hidden shadow-md cursor-pointer transition transform active:scale-95 flex items-center justify-center";
+          fill.style.display = 'none';
           fill.style.width = '0%';
+          fill.style.transition = 'none';
+          
+          btn.disabled = false;
+          btn.className = "relative w-full py-3.5 px-4 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 border border-indigo-500 overflow-hidden shadow-md cursor-pointer select-none flex items-center justify-center active:scale-95";
           textSpan.textContent = "Begrepen, ik breng ze z.s.m. terug ✓";
         }
       }, 1000);
@@ -1499,6 +1501,7 @@
     function renderActiveAdminTab() {
       const query = document.getElementById('adminSearchInput').value;
 
+      // TAB 1: Live Uitgeleend (Harmonieuze kaders)
       if (activeAdminTab === 'loans') {
         const container = document.getElementById('adminLoansGroupedContainer');
         container.innerHTML = '';
@@ -1540,12 +1543,20 @@
           const items = sortItemsUniform(rawItems);
           const maxDays = Math.max(...items.map(x => calculateDaysOut(x.timestamp)));
 
-          const hasOverdue4Plus = maxDays >= 4;
-          const hasOverdue2Plus = maxDays >= 2;
+          // Harmonieuze kaders en tags:
+          const isCritical5Plus = maxDays >= 5;
+          const isWarning4 = maxDays === 4;
 
           let borderAccent = "border-slate-200";
-          if (hasOverdue4Plus) borderAccent = "border-rose-400 ring-1 ring-rose-300 border-l-4 border-l-rose-500 bg-rose-50/20";
-          else if (hasOverdue2Plus) borderAccent = "border-amber-300 border-l-4 border-l-amber-500 bg-amber-50/15";
+          let headerTagHtml = "";
+
+          if (isCritical5Plus) {
+            borderAccent = "border-rose-400 ring-1 ring-rose-300 border-l-4 border-l-rose-500 bg-rose-50/20";
+            headerTagHtml = '<span class="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200">🚨 5+ Dagen te laat!</span>';
+          } else if (isWarning4) {
+            borderAccent = "border-orange-400 border-l-4 border-l-orange-500 bg-orange-50/20";
+            headerTagHtml = '<span class="text-[10px] font-extrabold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">🟠 4 dagen in bezit</span>';
+          }
 
           const card = document.createElement('div');
           card.className = `bg-white rounded-2xl p-4 shadow-xs space-y-3 border ${borderAccent}`;
@@ -1583,7 +1594,7 @@
               <span class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs">👤</span>
                 ${teacher}
-                ${hasOverdue4Plus ? '<span class="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200">🚨 4+ Dagen te laat!</span>' : ''}
+                ${headerTagHtml}
               </span>
               <span class="text-[11px] font-bold bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-200">
                 ${items.length} item${items.length === 1 ? '' : 's'} in bezit
