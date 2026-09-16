@@ -41,11 +41,25 @@
 
   <!-- ==================== HEADER ==================== -->
   <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-sm z-30 h-14 shrink-0">
-    <div class="flex items-center gap-2 sm:gap-3">
-      <div id="liveClock" onclick="handleClockClick()" class="cursor-pointer text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2 select-none active:opacity-60" title="Tik 5x om cache te wissen">
+    <div class="flex items-center gap-2 sm:gap-2.5">
+      <div id="liveClock" class="text-xs md:text-sm font-semibold text-slate-600 tracking-wide flex items-center gap-2 select-none">
         <span id="connectionDot" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
         <span id="dateText">Laden...</span>
       </div>
+
+      <!-- REFRESH KNOP (Direct bruikbaar voor docenten) -->
+      <button 
+        id="btnHeaderRefresh" 
+        onclick="handleHeaderRefresh(this)" 
+        ondblclick="forceHardCacheReset()"
+        title="Tik om direct te synchroniseren (dubbelklik voor harde reset)"
+        class="bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 p-1.5 rounded-xl border border-slate-200 transition shadow-2xs flex items-center justify-center active:scale-90"
+      >
+        <svg id="headerRefreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+
       <span id="offlineQueueBadge" class="hidden text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
         ⏳ <span id="offlineQueueCount">0</span> wachtrij
       </span>
@@ -104,11 +118,11 @@
     <section id="screenDashboard" class="hidden flex-1 overflow-y-auto custom-scroll p-4 md:p-6 pb-64 sm:pb-52 lg:pb-40">
       <div class="max-w-7xl mx-auto space-y-6">
 
-        <!-- Passieve waarschuwingsbanner bij 4+ dagen -->
+        <!-- Passieve waarschuwingsbanner bij 4+ werkdagen -->
         <div id="dashboardOverdueAlert" class="hidden bg-rose-50 border-2 border-rose-300 rounded-2xl p-3.5 shadow-sm flex items-center gap-3">
           <span class="text-2xl animate-jump-siren">⚠️</span>
           <div class="text-xs sm:text-sm text-rose-900 font-medium">
-            <span class="font-bold">Let op:</span> Je hebt spullen die al 4 of meer dagen op jouw naam staan. Vergeet je deze vandaag niet in te leveren?
+            <span class="font-bold">Let op:</span> Je hebt spullen die al 4 of meer werkdagen op jouw naam staan. Vergeet je deze vandaag niet in te leveren?
           </div>
         </div>
 
@@ -167,7 +181,7 @@
   <!-- ==================== FOOTER ==================== -->
   <footer id="mainFooter" class="bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 select-none z-20 shrink-0">
     <div class="flex items-center">
-      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.4</span>
+      <span class="font-bold text-slate-700 bg-slate-100 px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200">v2.5</span>
       <button onclick="openPatchNotesModal()" class="ml-1.5 sm:ml-2 text-indigo-600 hover:text-indigo-800 underline font-semibold">Patch notes</button>
     </div>
     <div class="text-right truncate ml-2">
@@ -215,7 +229,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL: 4+ DAGEN INTERVENTIE POPUP (5s COUNTDOWN) ==================== -->
+  <!-- ==================== MODAL: 4+ WERKDAGEN INTERVENTIE POPUP (5s COUNTDOWN) ==================== -->
   <div id="overdueInterventionModal" class="hidden fixed inset-0 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-[75]">
     <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border-2 border-rose-300">
       <div class="flex items-center gap-2.5 mb-3">
@@ -223,13 +237,13 @@
         <h3 class="text-lg font-extrabold text-slate-900">Even opletten!</h3>
       </div>
       <p class="text-xs text-slate-600 mb-3 leading-relaxed">
-        De volgende spullen staan al <span class="font-bold text-rose-600">4 of meer dagen</span> op jouw naam, maar heb je nu niet aangevinkt om in te leveren:
+        De volgende spullen staan al <span class="font-bold text-rose-600">4 of meer werkdagen</span> op jouw naam, maar heb je nu niet aangevinkt om in te leveren:
       </p>
       
       <div id="overdueInterventionList" class="space-y-2 mb-4 max-h-40 overflow-y-auto custom-scroll bg-slate-50 p-3 rounded-2xl border border-slate-200"></div>
 
       <p class="text-[11px] text-slate-400 italic mb-4 leading-normal">
-        Spullen dienen binnen 1 à 2 dagen geretourneerd te worden zodat collega's ze weer kunnen gebruiken.
+        Spullen dienen binnen 1 à 2 werkdagen geretourneerd te worden zodat collega's ze weer kunnen gebruiken.
       </p>
 
       <div>
@@ -309,7 +323,7 @@
     <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between mb-4 border-b pb-2.5">
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.4</span>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">v2.5</span>
           <h3 class="text-base font-bold text-slate-800">Patch Notes</h3>
         </div>
         <button onclick="closePatchNotesModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
@@ -317,11 +331,16 @@
       
       <div class="space-y-4 text-xs text-slate-600 mb-5 max-h-72 overflow-y-auto custom-scroll pr-1">
         <div class="bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.4 (Huidig)</span>
+          <span class="font-bold text-indigo-900 text-xs">🚀 Versie 2.5 (Huidig)</span>
           <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-700">
-            <li><strong>Write-First &amp; Keepalive:</strong> Transacties worden lokaal opgeslagen vóór verzending en voltooien op smartphones zelfs als het browsertabblad direct wordt afgesloten.</li>
-            <li><strong>Beheer-Overdracht:</strong> Admin kan spullen via Live Uitgeleend direct overdragen naar een collega met automatische datumreset naar vandaag.</li>
-            <li><strong>Header-Garantie:</strong> Sheet-tabbladen genereren altijd automatisch koppen op rij 1.</li>
+            <li><strong>Werkdagen &amp; Kalenderdagen:</strong> De teller verspringt nu direct bij het passeren van middernacht (geen 24-uurs vertraging meer). Weekenden tellen niet meer mee als leendagen.</li>
+            <li><strong>Zichtbare Refreshknop:</strong> Direct naast de klok staat nu een duidelijke verversknop voor docenten.</li>
+          </ul>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <span class="font-bold text-slate-800 text-xs">📦 Versie 2.4</span>
+          <ul class="list-disc pl-4 mt-1.5 space-y-1 text-slate-600">
+            <li>Write-First &amp; Keepalive netwerkbescherming + Beheer-overdracht.</li>
           </ul>
         </div>
       </div>
@@ -432,7 +451,7 @@
       <div class="flex items-center justify-between mb-3 border-b pb-3">
         <div>
           <h3 id="violationModalTeacherTitle" class="text-base font-extrabold text-slate-800">Overtredingen</h3>
-          <p class="text-xs text-slate-400">Items die 4 of meer dagen in bezit zijn gebleven</p>
+          <p class="text-xs text-slate-400">Items die 4 of meer werkdagen in bezit zijn gebleven</p>
         </div>
         <button onclick="closeViolationDetailModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
       </div>
@@ -511,7 +530,7 @@
             />
           </div>
 
-          <!-- TAB 1: Live Uitgeleend (Met Overdragen Knop) -->
+          <!-- TAB 1: Live Uitgeleend -->
           <div id="adminSectionLoans" class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <div class="flex gap-2">
@@ -545,7 +564,7 @@
           <!-- TAB 3: Overtredingen -->
           <div id="adminSectionViolations" class="hidden space-y-4">
             <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-medium">
-              Hier staan docenten die materialen 4 of meer dagen in bezit hebben gehouden. Klik op een docent om details te bekijken of kwijt te schelden.
+              Hier staan docenten die materialen 4 of meer werkdagen in bezit hebben gehouden. Klik op een docent om details te bekijken of kwijt te schelden.
             </div>
             <div id="adminViolationsContainer" class="space-y-2.5"></div>
           </div>
@@ -630,9 +649,9 @@
   <!-- ==================== JAVASCRIPT LOGICA ==================== -->
   <script>
     // PAS DEZE URL AAN MET JE EIGEN APPS SCRIPT WEB APP URL:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6Cb89mcQv7SDCVN9vhnpSZ0J4c8eiaem4SuaW0AcNBrJTHHHw3mHcvvUMVBNvzbKscQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwX_EXAMPLE_REPLACE_ME/exec";
 
-    const CURRENT_APP_VERSION = "2.4";
+    const CURRENT_APP_VERSION = "2.5";
     if (localStorage.getItem('mww_app_version') !== CURRENT_APP_VERSION) {
       localStorage.removeItem('mww_stock_data');
       localStorage.setItem('mww_app_version', CURRENT_APP_VERSION);
@@ -650,8 +669,6 @@
     let activeReportingItem = null;
     let activeAdminTab = 'loans';
     let inactivityTimer = null;
-    let clockClickCount = 0;
-    let clockClickTimer = null;
 
     let loanFilterMode = 'all';
     let loanSortLongestFirst = true;
@@ -664,7 +681,7 @@
     let isHistoryLoading = false;
     let currentTransferFromTeacher = null;
 
-    // --- DATUM PARSERS & HELPERS ---
+    // --- DATUM PARSERS & KALENDERDAGEN MET WEEKEND-UITSLUITING ---
     function parseDate(dateStr) {
       if (!dateStr) return null;
       if (dateStr instanceof Date) return dateStr;
@@ -677,11 +694,26 @@
       return isNaN(d.getTime()) ? null : d;
     }
 
+    // Telt verstreken werkdagen over middernachtsgrenzen (Zaterdag & Zondag tellen NIET mee)
     function calculateDaysOut(dateStr) {
       const d = parseDate(dateStr);
       if (!d) return 0;
-      const diffMs = new Date().getTime() - d.getTime();
-      return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+      const now = new Date();
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (end <= start) return 0; // Zelfde kalenderdag = 0 dagen (Vandaag)
+      
+      let days = 0;
+      let cur = new Date(start.getTime());
+      while (cur < end) {
+        cur.setDate(cur.getDate() + 1);
+        const dayOfWeek = cur.getDay(); // 0 = Zondag, 6 = Zaterdag
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          days++;
+        }
+      }
+      return days;
     }
 
     function formatCleanDateTime(dateStr) {
@@ -700,15 +732,18 @@
       if (days === 0) {
         return `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">🟢 Vandaag (${timeStr})</span>`;
       } else if (days === 1) {
-        return `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">🟢 Gisteren</span>`;
+        const now = new Date();
+        const calDaysDiff = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / (1000 * 60 * 60 * 24));
+        const label = calDaysDiff === 1 ? "Gisteren" : "1 werkdag";
+        return `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">🟢 ${label}</span>`;
       } else if (days === 2) {
-        return `<span class="bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">🟡 2 dagen geleden</span>`;
+        return `<span class="bg-amber-50 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">🟡 2 werkdagen</span>`;
       } else if (days === 3) {
-        return `<span class="bg-orange-50 text-orange-700 border border-orange-300 px-2 py-0.5 rounded-full text-[10px] font-bold">🟠 3 dagen in bezit</span>`;
+        return `<span class="bg-orange-50 text-orange-700 border border-orange-300 px-2 py-0.5 rounded-full text-[10px] font-bold">🟠 3 werkdagen</span>`;
       } else if (days === 4) {
-        return `<span class="bg-orange-100 text-orange-800 border border-orange-300 px-2 py-0.5 rounded-full text-[10px] font-extrabold">🟠 4 dagen in bezit</span>`;
+        return `<span class="bg-orange-100 text-orange-800 border border-orange-300 px-2 py-0.5 rounded-full text-[10px] font-extrabold">🟠 4 werkdagen</span>`;
       } else {
-        return `<span class="bg-rose-100 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse">🚨 ${days} dagen geleden!</span>`;
+        return `<span class="bg-rose-100 text-rose-700 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-black animate-pulse">🚨 ${days} werkdagen!</span>`;
       }
     }
 
@@ -724,7 +759,7 @@
       });
     }
 
-    // --- 1. INITIALISATIE, NETWERK & OFFLINE QUEUE ---
+    // --- 1. INITIALISATIE & REFRESHKNOP ---
     window.addEventListener('DOMContentLoaded', () => {
       startLiveClock();
       updateNetworkStatus();
@@ -757,6 +792,34 @@
       setInterval(update, 1000);
     }
 
+    // Zichtbare knop naast de klok (Screenshot 3)
+    async function handleHeaderRefresh(btn) {
+      const icon = document.getElementById('headerRefreshIcon');
+      if (icon) icon.classList.add('animate-spin');
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) reg.update();
+        }
+        await fetchDataFromSheet(true);
+      } catch (err) {
+        console.warn("Fout bij synchroniseren:", err);
+      } finally {
+        setTimeout(() => {
+          if (icon) icon.classList.remove('animate-spin');
+        }, 600);
+      }
+    }
+
+    function forceHardCacheReset() {
+      if (confirm("Wil je alle tijdelijke cache en cookies wissen en de allernieuwste versie geforceerd herladen?")) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = window.location.pathname + '?_bust=' + Date.now();
+      }
+    }
+
     function updateNetworkStatus() {
       const dot = document.getElementById('connectionDot');
       if (!dot) return;
@@ -766,20 +829,6 @@
       } else {
         dot.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500";
         dot.title = "Offline (transacties worden lokaal bewaard)";
-      }
-    }
-
-    function handleClockClick() {
-      clockClickCount++;
-      clearTimeout(clockClickTimer);
-      clockClickTimer = setTimeout(() => { clockClickCount = 0; }, 2000);
-
-      if (clockClickCount >= 5) {
-        clockClickCount = 0;
-        localStorage.clear();
-        sessionStorage.clear();
-        alert("🧹 Alle cache en cookies gewist! De nieuwste versie wordt nu geladen...");
-        window.location.href = window.location.pathname + '?_bust=' + Date.now();
       }
     }
 
@@ -1273,7 +1322,7 @@
               <span>${item.category === 'Tablet' ? '📱' : '📦'}</span>
               <span class="font-bold text-slate-800">${item.item}${numLabel}</span>
             </div>
-            <span class="text-rose-600 font-extrabold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md text-[10px]">${days} dagen in bezit</span>
+            <span class="text-rose-600 font-extrabold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md text-[10px]">${days} werkdagen</span>
           `;
           listContainer.appendChild(row);
         });
@@ -1535,7 +1584,6 @@
         reports: reportsArray
       };
 
-      // 1. Optimistische voorraadupdate lokaal
       const nowStr = formatCleanDateTime(new Date());
       selectedReturns.forEach(ret => {
         rawData.activeLoans = (rawData.activeLoans || []).filter(l => 
@@ -1553,13 +1601,11 @@
       });
       localStorage.setItem('mww_stock_data', JSON.stringify(rawData));
 
-      // 2. WRITE-FIRST: direct lokaal bufferen VOORDAT het netwerk wordt aangesproken
       const txId = "tx_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
       const queue = getOfflineQueue();
       queue.push({ id: txId, payload: payload });
       saveOfflineQueue(queue);
 
-      // 3. Verzenden met keepalive: true (blijft lopen zelfs als scherm direct sluit)
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1575,7 +1621,6 @@
 
         clearTimeout(timeoutId);
 
-        // Succesvol afgeleverd: verwijder uit wachtrij
         const cleanQueue = getOfflineQueue().filter(q => q.id !== txId);
         saveOfflineQueue(cleanQueue);
 
@@ -1694,7 +1739,7 @@
     function renderActiveAdminTab() {
       const query = document.getElementById('adminSearchInput').value;
 
-      // TAB 1: Live Uitgeleend (Met Overdracht-actie)
+      // TAB 1: Live Uitgeleend
       if (activeAdminTab === 'loans') {
         const container = document.getElementById('adminLoansGroupedContainer');
         container.innerHTML = '';
@@ -1744,10 +1789,10 @@
 
           if (isCritical5Plus) {
             borderAccent = "border-rose-400 ring-1 ring-rose-300 border-l-4 border-l-rose-500 bg-rose-50/20";
-            headerTagHtml = '<span class="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200">🚨 5+ Dagen te laat!</span>';
+            headerTagHtml = '<span class="text-[10px] font-black text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full border border-rose-200">🚨 5+ Werkdagen te laat!</span>';
           } else if (isWarning4) {
             borderAccent = "border-orange-400 border-l-4 border-l-orange-500 bg-orange-50/20";
-            headerTagHtml = '<span class="text-[10px] font-extrabold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">🟠 4 dagen in bezit</span>';
+            headerTagHtml = '<span class="text-[10px] font-extrabold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full border border-orange-300">🟠 4 werkdagen in bezit</span>';
           }
 
           const card = document.createElement('div');
@@ -1863,7 +1908,7 @@
               <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-rose-100 text-rose-700 font-bold text-xs">👤</span>
               <div>
                 <span class="font-extrabold text-slate-800 text-sm">${teacher}</span>
-                <div class="text-xs font-bold text-rose-600 mt-0.5">${count} overtreding${count === 1 ? '' : 'en'} (4+ dagen te laat ingeleverd)</div>
+                <div class="text-xs font-bold text-rose-600 mt-0.5">${count} overtreding${count === 1 ? '' : 'en'} (4+ werkdagen te laat ingeleverd)</div>
               </div>
             </div>
             <button onclick="openTeacherViolationsModal('${teacher.replace(/'/g, "\\'")}')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 border text-slate-700 font-bold px-3 py-1.5 rounded-xl transition">
@@ -2072,7 +2117,7 @@
         row.innerHTML = `
           <div>
             <div class="font-bold text-slate-800">${v.items}</div>
-            <div class="text-slate-400 text-[11px] mt-0.5">Ingeleverd op: ${formatCleanDateTime(v.dateReturned)} &bull; <span class="text-rose-600 font-bold">${v.daysOut} dagen in bezit</span></div>
+            <div class="text-slate-400 text-[11px] mt-0.5">Ingeleverd op: ${formatCleanDateTime(v.dateReturned)} &bull; <span class="text-rose-600 font-bold">${v.daysOut} werkdagen in bezit</span></div>
           </div>
           <button onclick="adminKwijtschelden('${v.violationId}', '${teacher}')" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 font-bold px-3 py-1.5 rounded-lg transition ml-3 shrink-0">
             🤝 Kwijtschelden
@@ -2151,7 +2196,6 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
-          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminSaveNotice", pin: "1115", category, item, text, context, rowId: rowId ? parseInt(rowId, 10) : null })
         });
@@ -2196,7 +2240,6 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
-          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminDeleteNotice", pin: "1115", rowId })
         });
@@ -2219,7 +2262,6 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
-          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminRelease", pin: "1115", category, item, number })
         });
@@ -2240,7 +2282,6 @@
         await fetch(SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
-          keepalive: true,
           headers: { "Content-Type": "text/plain" },
           body: JSON.stringify({ action: "adminResolveIssue", pin: "1115", rowId })
         });
