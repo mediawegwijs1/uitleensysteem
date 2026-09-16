@@ -3,7 +3,7 @@
  * Network-First voor altijd de laatste versie, met offline-fallback.
  */
 
-const CACHE_NAME = 'mww-app-cache-v2.4';
+const CACHE_NAME = 'mww-app-cache-v2.5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
