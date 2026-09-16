@@ -792,24 +792,24 @@
       setInterval(update, 1000);
     }
 
-    // Zichtbare knop naast de klok (Screenshot 3)
     async function handleHeaderRefresh(btn) {
       const icon = document.getElementById('headerRefreshIcon');
       if (icon) icon.classList.add('animate-spin');
 
-      try {
-        if ('serviceWorker' in navigator) {
-          const reg = await navigator.serviceWorker.getRegistration();
-          if (reg) reg.update();
-        }
-        await fetchDataFromSheet(true);
-      } catch (err) {
-        console.warn("Fout bij synchroniseren:", err);
-      } finally {
-        setTimeout(() => {
-          if (icon) icon.classList.remove('animate-spin');
-        }, 600);
+      // 1. Wis Service Worker cachegeheugen
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(key => caches.delete(key)));
+        } catch (e) {}
       }
+
+      // 2. Wis lokale opgeslagen data (behalve eventuele offline wachtrij)
+      localStorage.removeItem('mww_stock_data');
+      sessionStorage.clear();
+
+      // 3. Forceer een harde herlaadbeurt via een unieke timestamp
+      window.location.href = window.location.pathname + '?_bust=' + Date.now();
     }
 
     function forceHardCacheReset() {
